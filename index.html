@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>ERP Система владельца Фудтрака | GTA 5 RP</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; border-bottom: 3px solid #27ae60; padding-bottom: 10px; }
+        h2 { color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px; margin-top: 30px; }
+        .logic-select-box { background: #e8f4f8; border-left: 5px solid #2980b9; padding: 20px; border-radius: 6px; margin-bottom: 25px; }
+        .logic-select-box select { padding: 10px; font-size: 16px; width: 100%; max-width: 500px; border-radius: 4px; border: 1px solid #bdc3c7; }
+        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px dashed #7f8c8d; margin-bottom: 25px; }
+        .config-group { display: flex; flex-direction: column; }
+        .config-group label { font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #555; }
+        .config-group input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .menu-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 20px; border-radius: 8px; background: #fff; margin-bottom: 25px; }
+        .menu-item { display: flex; align-items: center; font-size: 14px; cursor: pointer; padding: 4px; border-radius: 4px; }
+        .menu-item:hover { background: #f0f3f4; }
+        .menu-item input { margin-right: 10px; transform: scale(1.2); }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #34495e; color: white; font-size: 14px; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        td input[type="number"] { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100px; }
+        .btn-container { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-top: 25px; margin-bottom: 30px; }
+        button { color: white; border: none; padding: 16px; font-size: 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        .btn-calc { background-color: #27ae60; } .btn-calc:hover { background-color: #2196f3; }
+        .btn-save { background-color: #2980b9; } .btn-save:hover { background-color: #3498db; }
+        .btn-reset { background-color: #c0392b; } .btn-reset:hover { background-color: #e74c3c; }
+        .result-box { background-color: #f4f9f4; border: 1px solid #27ae60; border-left: 6px solid #27ae60; padding: 25px; border-radius: 6px; display: none; margin-top: 30px; }
+        .result-box h3 { color: #27ae60; margin-top: 0; border-bottom: 1px solid #e2f0d9; padding-bottom: 5px; }
+        .error-card { background-color: #fdf2f2; border: 1px solid #f8b4b4; border-left: 6px solid #e74c3c; color: #9b1c1c; padding: 15px; margin-top: 20px; border-radius: 6px; display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🚚 Профессиональная ERP-Система Снабжения и Кулинарии</h1>
+
+    <h2>🎯 Выбор логики работы бизнеса:</h2>
+    <div class="logic-select-box">
+        <label style="font-weight: bold; display: block; margin-bottom: 8px;">Выберите ваш текущий формат работы на смене:</label>
+        <select id="business_logic" onchange="switchBusinessLogic()">
+            <option value="1">1. Работа только на Фудтраке (Лимит закупа: 50-100 кг, риск деспавна)</option>
+            <option value="2">2. Закупка на дополнительном легковом авто (Доставка сырья в Трак, лимит багажника)</option>
+            <option value="3">3. Максимальная цепочка (Легковое авто + Кемпер Автодом + Фудтрак)</option>
+        </select>
+    </div>
+
+    <h2>⚙️ Настройка параметров вместимости и цен:</h2>
+    <div class="config-grid">
+        <div class="config-group" id="group_truck_limit">
+            <label>Холодильник Фудтрака (кг):</label>
+            <input type="number" id="cfg_truck_fridge" value="100">
+        </div>
+        <div class="config-group" id="group_car_limit">
+            <label>Багажник легкового авто (кг):</label>
+            <input type="number" id="cfg_car_trunk" value="245">
+        </div>
+        <div class="config-group" id="group_rv_storage">
+            <label>Багажник Автодома для заготовок (кг):</label>
+            <input type="number" id="cfg_rv_storage" value="260">
+        </div>
+        <div class="config-group" id="group_rv_cabinet">
+            <label>Шкаф Автодома для сырья (кг):</label>
+            <input type="number" id="cfg_rv_cabinet" value="300">
+        </div>
+        <div class="config-group">
+            <label>Ваша наценка на блюда (Маржа в %):</label>
+            <input type="number" id="cfg_margin_percent" value="40">
+        </div>
+        <div class="config-group">
+            <label>Рыночная цена РЫБЫ с рук (за 1 шт, $):</label>
+            <input type="number" id="cfg_fish_price" value="400">
+        </div>
+    </div>
+
+    <h2>🛒 1. Выберите активное меню продаж на смену:</h2>
+    <div id="menu_checkboxes" class="menu-container"></div>
+
+    <h2 id="title_block3">🥣 2. Текущие остатки чистых заготовок (в порциях):</h2>
+    <p><small>*Внесите объемы заготовок, которые уже накручены поварами и лежат на хранении.</small></p>
+    <table id="table_ready_stock">
+        <thead>
+            <tr id="thead_ready_stock">
+                <!-- Генерируется через core.js -->
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Генерируется динамически под выбранное меню -->
+        </tbody>
+    </table>
+
+    <h2 id="title_block4">📦 3. Текущие остатки базового сырья на складах (в штуках/порциях):</h2>
+    <table id="table_raw_stock">
+        <thead>
+            <tr>
+                <th>Продукт</th><th>Цена базы</th><th id="th_raw_stock_name">Текущий остаток</th>
+                <th>Продукт</th><th>Цена базы</th><th id="th_raw_stock_name_2">Текущий остаток</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>🥦 ОВОЩИ</td><td>$55</td><td><input type="number" id="stock_овощи" value="0"></td>
+                <td>🍚 РИС</td><td>$45</td><td><input type="number" id="stock_рис" value="0"></td>
+            </tr>
+            <tr>
+                <td>🥩 МЯСО</td><td>$500</td><td><input type="number" id="stock_мясо" value="0"></td>
+                <td>🍎 ФРУКТЫ</td><td>$55</td><td><input type="number" id="stock_фрукты" value="0"></td>
+            </tr>
+            <tr>
+                <td>🍬 САХАР</td><td>$45</td><td><input type="number" id="stock_сахар" value="0"></td>
+                <td>🌾 МУКА</td><td>$45</td><td><input type="number" id="stock_мука" value="0"></td>
+            </tr>
+            <tr>
+                <td>🥛 МОЛОКО</td><td>$55</td><td><input type="number" id="stock_молоко" value="0"></td>
+                <td>🥚 ЯЙЦО</td><td>$45</td><td><input type="number" id="stock_яйцо" value="0"></td>
+            </tr>
+            <tr>
+                <td>🐟 РЫБА (С рук)</td><td id="label_fish_price">$400</td><td><input type="number" id="stock_рыба" value="0"></td>
+                <td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="btn-container">
+        <button class="btn-calc" onclick="calculateLogisticsCore()">🚀 Сделать переучет и рассчитать смену</button>
+        <button class="btn-save" onclick="saveToLocalStorage()">💾 Сохранить остатки</button>
+        <button class="btn-reset" onclick="resetAllFields()">🧹 Обнулить склады</button>
+    </div>
+
+    <div id="error_box" class="error-card"></div>
+
+    <div id="result_box" class="result-box">
+        <h3>📋 1. Накладная снабжения (Что докупить/скупить)</h3>
+        <div id="res_shopping_list"></div>
+        
+        <h3>🚛 2. Транспортный план и весовой контроль</h3>
+        <div id="res_transport_plan"></div>
+        
+        <h3>👨‍🍳 3. Цеховой план загрузки Фудтрака перед выездом</h3>
+        <div id="res_truck_loading"></div>
+        
+        <h3>💰 4. Экономический потенциал смены</h3>
+        <div id="res_economy_block"></div>
+    </div>
+</div>
+
+<!-- Подключение логических модулей системы -->
+<script src="menu_part1.js"></script>
+<script src="menu_part2.js"></script>
+<script src="menu_part3.js"></script>
+<script src="core.js"></script>
+<script src="logistics.js"></script>
+</body>
+</html>
