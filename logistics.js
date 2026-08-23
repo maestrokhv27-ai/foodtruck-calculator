@@ -239,22 +239,23 @@ function showFullRecipeChain() {
         html += `</ul>`;
         
         // Добавляем информацию об инструментах
-        html += `<div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 13px;">`;
-        html += `<strong>🔧 Инструменты:</strong> `;
+        html += `<div style="margin-top: 12px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 6px; color: white;">`;
+        html += `<strong style="font-size: 15px;">🔧 Инструменты:</strong> `;
         if (dish.tool) {
             const tools = Array.isArray(dish.tool) ? dish.tool : [dish.tool];
             const toolIcons = {
-                "нож": "🔪",
+                "нож": "",
                 "венчик": "🥄",
                 "огонь": "🔥"
             };
-            html += tools.map(t => `${toolIcons[t.toLowerCase()] || '🔧'} ${t}`).join(', ');
+            html += tools.map(t => {
+                const icon = toolIcons[t.toLowerCase()] || '🔧';
+                return `<span style="display: inline-flex; align-items: center; margin: 5px; padding: 5px 12px; background: rgba(255,255,255,0.2); border-radius: 6px; font-size: 18px; font-weight: bold;">${icon} <span style="font-size: 14px; margin-left: 5px;">${t}</span></span>`;
+            }).join(' ');
         } else {
-            html += '<span style="color: #7f8c8d;">Не требуется</span>';
+            html += '<span style="color: rgba(255,255,255,0.7);">Не требуется</span>';
         }
         html += `</div>`;
-        
-        html += `</div></div>`;
     });
     
     content.innerHTML = html;
@@ -308,12 +309,15 @@ function showComponentChain(component, qty, level) {
         // Показываем инструменты для этого компонента
         if (subComponents.инструменты) {
             const toolIcons = {
-                "нож": "",
-                "венчик": "",
-                "огонь": ""
+                "нож": "🔪",
+                "венчик": "🥄",
+                "огонь": "🔥"
             };
-            const toolsHtml = subComponents.инструменты.map(t => `${toolIcons[t.toLowerCase()] || '🔧'} ${t}`).join(', ');
-            html += `<li style="margin-top: 5px; color: #7f8c8d; font-size: 12px;">Инструменты: ${toolsHtml}</li>`;
+            const toolsHtml = subComponents.инструменты.map(t => {
+                const icon = toolIcons[t.toLowerCase()] || '🔧';
+                return `<span style="display: inline-flex; align-items: center; margin: 2px 5px; padding: 3px 8px; background: #fff3cd; border-radius: 4px; font-size: 16px; font-weight: bold;">${icon} <span style="font-size: 13px; margin-left: 3px;">${t}</span></span>`;
+            }).join(' ');
+            html += `<li style="margin-top: 8px;">${toolsHtml}</li>`;
         }
         
         html += `</ul>`;
