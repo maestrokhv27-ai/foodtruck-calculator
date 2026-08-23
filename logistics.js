@@ -202,6 +202,7 @@ function calculateLogisticsCore() {
 }
 
 // ==================== ПОКАЗ ПОЛНОЙ ЦЕПОЧКИ ПРИГОТОВЛЕНИЯ ====================
+// ==================== ПОКАЗ ПОЛНОЙ ЦЕПОЧКИ ПРИГОТОВЛЕНИЯ ====================
 function showFullRecipeChain() {
     const selectedDishes = [];
     DISH_DATABASE.forEach((dish, idx) => {
@@ -220,41 +221,26 @@ function showFullRecipeChain() {
     
     let html = "";
     
-    selectedDishes.forEach(dish => {
-        html += `<div style="background: white; border-left: 4px solid #27ae60; padding: 15px; margin-bottom: 15px; border-radius: 4px;">`;
-        html += `<h4 style="margin: 0 0 10px 0; color: #2c3e50;">${dish.name}</h4>`;
-        html += `<div style="font-size: 13px; color: #7f8c8d; margin-bottom: 10px;">${dish.craft}</div>`;
-        html += `<div style="margin-left: 15px;">`;
-        html += `<strong>🧪 Необходимые компоненты:</strong><ul style="margin: 5px 0; padding-left: 20px;">`;
+    selectedDishes.forEach((dish, dishIdx) => {
+        // Заголовок блюда с зелёной полосой сверху
+        html += `<div style="background: white; border-top: 4px solid #27ae60; border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 15px; border-radius: 4px;">`;
+        html += `<h4 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 18px;">${dish.name}</h4>`;
+        html += `<div style="font-size: 13px; color: #7f8c8d; margin-bottom: 15px; font-style: italic;">${dish.craft}</div>`;
+        html += `<div style="margin-left: 10px;">`;
+        html += `<strong style="color: #27ae60;">🧪 Необходимые компоненты:</strong>`;
+        html += `<ol style="margin: 10px 0; padding-left: 25px; line-height: 1.8;">`;
         
+        let compIndex = 0;
         for (let component in dish.recipe) {
+            compIndex++;
             const qty = dish.recipe[component];
             const compName = COMPONENT_NAMES[component] || component;
-            html += `<li><strong>${compName}</strong> — ${qty} шт.`;
-            html += showComponentChain(component, qty, 1);
+            html += `<li style="margin-bottom: 8px;"><strong>${compName}</strong> — ${qty} шт.`;
+            html += showComponentChain(component, qty, 1, compIndex);
             html += `</li>`;
         }
         
-        html += `</ul>`;
-        
-        // Добавляем информацию об инструментах
-        html += `<div style="margin-top: 12px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 6px; color: white;">`;
-        html += `<strong style="font-size: 15px;">🔧 Инструменты:</strong> `;
-        if (dish.tool) {
-            const tools = Array.isArray(dish.tool) ? dish.tool : [dish.tool];
-            const toolIcons = {
-                "нож": "",
-                "венчик": "🥄",
-                "огонь": "🔥"
-            };
-            html += tools.map(t => {
-                const icon = toolIcons[t.toLowerCase()] || '🔧';
-                return `<span style="display: inline-flex; align-items: center; margin: 5px; padding: 5px 12px; background: rgba(255,255,255,0.2); border-radius: 6px; font-size: 18px; font-weight: bold;">${icon} <span style="font-size: 14px; margin-left: 5px;">${t}</span></span>`;
-            }).join(' ');
-        } else {
-            html += '<span style="color: rgba(255,255,255,0.7);">Не требуется</span>';
-        }
-        html += `</div>`;
+        html += `</ol></div></div>`;
     });
     
     content.innerHTML = html;
@@ -262,7 +248,7 @@ function showFullRecipeChain() {
     box.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
-function showComponentChain(component, qty, level) {
+function showComponentChain(component, qty, level, parentIndex) {
     let html = "";
     
     const recipes = {
@@ -288,18 +274,19 @@ function showComponentChain(component, qty, level) {
     const subComponents = recipes[component] || {};
     
     if (Object.keys(subComponents).length > 0) {
-        html += `<ul style="margin: 5px 0; padding-left: 20px; color: #34495e;">`;
+        html += `<ol style="margin: 5px 0 5px 20px; padding-left: 20px; line-height: 1.7;">`;
+        let subIndex = 0;
         for (let subComp in subComponents) {
             if (subComp === "инструменты") continue;
-            
+            subIndex++;
             const subQty = subComponents[subComp] * qty;
             const subName = COMPONENT_NAMES[subComp] || subComp;
             
             if (baseIngredients.includes(subComp)) {
-                html += `<li>↳ <strong>${subName}</strong> — ${subQty} шт. <span style="color: #27ae60;">(базовый ингредиент)</span></li>`;
+                html += `<li><strong>${subName}</strong> — ${subQty} шт. <span style="color: #27ae60;">(базовый ингредиент)</span></li>`;
             } else {
-                html += `<li>↳ <strong>${subName}</strong> — ${subQty} шт.`;
-                html += showComponentChain(subComp, subQty, level + 1);
+                html += `<li><strong>${subName}</strong> — ${subQty} шт.`;
+                html += showComponentChain(subComp, subQty, level + 1, subIndex);
                 html += `</li>`;
             }
         }
@@ -313,14 +300,12 @@ function showComponentChain(component, qty, level) {
             };
             const toolsHtml = subComponents.инструменты.map(t => {
                 const icon = toolIcons[t.toLowerCase()] || '🔧';
-                return `<span style="display: inline-flex; align-items: center; margin: 2px 5px; padding: 3px 8px; background: #fff3cd; border-radius: 4px; font-size: 16px; font-weight: bold;">${icon} <span style="font-size: 13px; margin-left: 3px;">${t}</span></span>`;
+                return `<span style="display: inline-flex; align-items: center; margin: 2px 5px; padding: 3px 8px; background: #fff3cd; border-radius: 4px; font-size: 14px;">${icon} ${t}</span>`;
             }).join(' ');
-            html += `<li style="margin-top: 8px;">${toolsHtml}</li>`;
+            html += `<li style="margin-top: 5px; color: #555;">Инструменты: ${toolsHtml}</li>`;
         }
         
-        html += `</ul>`;
-    } else {
-        html += ` <span style="color: #27ae60;">(базовый ингредиент)</span>`;
+        html += `</ol>`;
     }
     
     return html;
