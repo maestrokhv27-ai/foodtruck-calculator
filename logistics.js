@@ -60,14 +60,16 @@ function calculateLogisticsCore() {
             if (k === "вареный_рис") f["рис"] += dish.recipe[k];
             if (k === "мясной_фарш") f["мясо"] += dish.recipe[k];
             if (k === "сыр") f["молоко"] += dish.recipe[k];
-            if (k === "хлеб" || k === "макароны") { f["мука"] += dish.recipe[k]; f["яйцо"] += dish.recipe[k]; }
+            if (k === "хлеб" || k === "макароны") { f["тесто"] = (f["тесто"] || 0) + dish.recipe[k]; }
             if (k === "стейк_заг") { f["мясо"] += dish.recipe[k]; f["фрукты"] += dish.recipe[k]; f["сахар"] += dish.recipe[k]; }
             if (k === "рыба_фрукт_заг") { f["рыба"] += dish.recipe[k]; f["фрукты"] += dish.recipe[k]; f["сахар"] += dish.recipe[k]; }
-            if (k === "картофельное_пюре") { f["овощи"] += dish.recipe[k]; f["молоко"] += dish.recipe[k] * 2; }
+            if (k === "картофельное_пюре") { f["овощи"] += dish.recipe[k]; f["масло"] = (f["масло"] || 0) + dish.recipe[k]; f["молоко"] += dish.recipe[k]; }
             
             if (k === "котлета") { f["мясо"] += dish.recipe[k]; f["масло"] = (f["масло"] || 0) + dish.recipe[k]; }
             if (k === "рыбная_котлета") { f["рыба"] += dish.recipe[k]; f["масло"] = (f["масло"] || 0) + dish.recipe[k]; }
             if (k === "рыбный_фарш") f["рыба"] += dish.recipe[k];
+            if (k === "тесто") { f["мука"] += dish.recipe[k]; f["яйцо"] += dish.recipe[k]; }
+            if (k === "карамель") f["сахар"] += dish.recipe[k];
         }
         
         let cp = 0;
@@ -97,16 +99,19 @@ function calculateLogisticsCore() {
         if (k === "овощи_заг") rawR["овощи"] += qty;
         if (k === "вареный_рис") rawR["рис"] += qty;
         if (k === "мясной_фарш") rawR["мясо"] += qty;
-        if (k === "хлеб" || k === "макароны") { rawR["мука"] += qty; rawR["яйцо"] += qty; }
+        if (k === "хлеб" || k === "макароны") { rawR["тесто"] = (rawR["тесто"] || 0) + qty; }
         if (k === "стейк_заг") { rawR["мясо"] += qty; rawR["фрукты"] += qty; rawR["сахар"] += qty; }
         if (k === "рыба_фрукт_заг") { rawR["рыба"] += qty; rawR["фрукты"] += qty; rawR["сахар"] += qty; }
-        if (k === "картофельное_пюре") { rawR["овощи"] += qty; rawR["молоко"] += qty * 2; }
+        if (k === "картофельное_пюре") { rawR["овощи"] += qty; rawR["масло"] = (rawR["масло"] || 0) + qty; rawR["молоко"] += qty; }
         
         if (k === "котлета") { rawR["мясо"] += qty; rawR["масло"] = (rawR["масло"] || 0) + qty; }
         if (k === "рыбная_котлета") { rawR["рыба"] += qty; rawR["масло"] = (rawR["масло"] || 0) + qty; }
         if (k === "рыбный_фарш") rawR["рыба"] += qty;
+        if (k === "тесто") { rawR["мука"] += qty; rawR["яйцо"] += qty; }
+        if (k === "карамель") rawR["сахар"] += qty;
         
-        if (k === "сыр" || k === "масло") rawR["молоко"] += qty;
+        if (k === "сыр") rawR["молоко"] += qty;
+        if (k === "масло") rawR["молоко"] += qty;
     }
 
     let w = 0, bc = 0, fc = 0, htmlShop = "<ul>", hasDef = false;
@@ -195,15 +200,126 @@ function calculateLogisticsCore() {
     let prof = rev - cog;
     let eHtml = `${htmlPrices}<hr><p>Полный себес: <strong>$${cog.toLocaleString()}</strong> | Выручка: <strong>$${rev.toLocaleString()}</strong></p><p style="font-size:16px;">💰 <b>Чистая прибыль:</b> <span style="color:#27ae60;font-weight:bold;">$${prof.toLocaleString()}</span></p>`;
     document.getElementById("res_economy_block").innerHTML = eHtml;
-        // Добавляем информацию о полной цепочке
-    let chainInfo = `<p style="background: #fff3cd; padding: 10px; border-radius: 4px; border-left: 4px solid #ffc107; margin-top: 15px;">`;
-    chainInfo += `<strong>🔗 Полная цепочка:</strong> Для приготовления <strong>${g} порций</strong> каждого блюда потребуется:`;
-    chainInfo += `<ul style="margin: 5px 0; padding-left: 20px;">`;
-    chainInfo += `<li> <strong>${Object.values(trk).reduce((a, b) => a + b, 0)} заготовок</strong> (общее количество)</li>`;
-    chainInfo += `<li>⚖️ <strong>${(Object.values(trk).reduce((a, b) => a + b, 0) * 0.2).toFixed(1)} кг</strong> готовых заготовок</li>`;
-    chainInfo += `<li>🏭 <strong>${s.length * g} порций</strong> суммарно (${s.length} блюд × ${g} порций)</li>`;
-    chainInfo += `</ul></p>`;
-    
-    eHtml = eHtml.replace('</ul>', chainInfo + '</ul>');
 }
 
+// ==================== ПОКАЗ ПОЛНОЙ ЦЕПОЧКИ ПРИГОТОВЛЕНИЯ ====================
+function showFullRecipeChain() {
+    const selectedDishes = [];
+    DISH_DATABASE.forEach((dish, idx) => {
+        if (document.getElementById(`dish_${idx}`) && document.getElementById(`dish_${idx}`).checked) {
+            selectedDishes.push(dish);
+        }
+    });
+
+    if (selectedDishes.length === 0) {
+        alert("Выберите хотя бы одно блюдо из меню!");
+        return;
+    }
+
+    const box = document.getElementById("recipe_chain_box");
+    const content = document.getElementById("recipe_chain_content");
+    
+    let html = "";
+    
+    selectedDishes.forEach(dish => {
+        html += `<div style="background: white; border-left: 4px solid #27ae60; padding: 15px; margin-bottom: 15px; border-radius: 4px;">`;
+        html += `<h4 style="margin: 0 0 10px 0; color: #2c3e50;">${dish.name}</h4>`;
+        html += `<div style="font-size: 13px; color: #7f8c8d; margin-bottom: 10px;">${dish.craft}</div>`;
+        html += `<div style="margin-left: 15px;">`;
+        html += `<strong>🧪 Необходимые компоненты:</strong><ul style="margin: 5px 0; padding-left: 20px;">`;
+        
+        for (let component in dish.recipe) {
+            const qty = dish.recipe[component];
+            const compName = COMPONENT_NAMES[component] || component;
+            html += `<li><strong>${compName}</strong> — ${qty} шт.`;
+            html += showComponentChain(component, qty, 1);
+            html += `</li>`;
+        }
+        
+        html += `</ul>`;
+        
+        // Добавляем информацию об инструментах
+        html += `<div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 13px;">`;
+        html += `<strong>🔧 Инструменты:</strong> `;
+        if (dish.tool) {
+            const tools = Array.isArray(dish.tool) ? dish.tool : [dish.tool];
+            const toolIcons = {
+                "нож": "🔪",
+                "венчик": "🥄",
+                "огонь": "🔥"
+            };
+            html += tools.map(t => `${toolIcons[t.toLowerCase()] || '🔧'} ${t}`).join(', ');
+        } else {
+            html += '<span style="color: #7f8c8d;">Не требуется</span>';
+        }
+        html += `</div>`;
+        
+        html += `</div></div>`;
+    });
+    
+    content.innerHTML = html;
+    box.style.display = "block";
+    box.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function showComponentChain(component, qty, level) {
+    let html = "";
+    
+    const recipes = {
+        "овощи_заг": { "овощи": 1, "инструменты": ["нож"] },
+        "вареный_рис": { "рис": 1, "вода": 1, "инструменты": ["огонь"] },
+        "картофельное_пюре": { "овощи": 1, "масло": 1, "молоко": 1, "инструменты": ["венчик", "огонь"] },
+        "мясной_фарш": { "мясо": 1, "инструменты": ["нож"] },
+        "рыбный_фарш": { "рыба": 1, "инструменты": ["нож"] },
+        "тесто": { "мука": 1, "вода": 1, "яйцо": 1, "инструменты": ["венчик"] },
+        "хлеб": { "тесто": 1, "инструменты": ["огонь"] },
+        "макароны": { "тесто": 1, "вода": 1, "инструменты": ["нож", "огонь"] },
+        "сыр": { "молоко": 1, "инструменты": ["венчик", "огонь"] },
+        "котлета": { "мясо": 1, "масло": 1, "инструменты": ["огонь"] },
+        "рыбная_котлета": { "рыба": 1, "масло": 1, "инструменты": ["огонь"] },
+        "стейк_заг": { "мясо": 1, "фрукты": 1, "сахар": 1, "инструменты": ["огонь"] },
+        "рыба_фрукт_заг": { "рыба": 1, "фрукты": 1, "сахар": 1, "инструменты": ["огонь"] },
+        "масло": { "молоко": 1, "инструменты": ["венчик"] },
+        "карамель": { "сахар": 1, "инструменты": ["огонь"] },
+        "мороженое": { "молоко": 2, "сахар": 1, "яйцо": 1, "инструменты": ["венчик"] }
+    };
+    
+    const baseIngredients = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "вода"];
+    
+    const subComponents = recipes[component] || {};
+    
+    if (Object.keys(subComponents).length > 0) {
+        html += `<ul style="margin: 5px 0; padding-left: 20px; color: #34495e;">`;
+        for (let subComp in subComponents) {
+            if (subComp === "инструменты") continue;
+            
+            const subQty = subComponents[subComp] * qty;
+            const subName = COMPONENT_NAMES[subComp] || subComp;
+            
+            if (baseIngredients.includes(subComp)) {
+                html += `<li>↳ <strong>${subName}</strong> — ${subQty} шт. <span style="color: #27ae60;">(базовый ингредиент)</span></li>`;
+            } else {
+                html += `<li>↳ <strong>${subName}</strong> — ${subQty} шт.`;
+                html += showComponentChain(subComp, subQty, level + 1);
+                html += `</li>`;
+            }
+        }
+        
+        // Показываем инструменты для этого компонента
+        if (subComponents.инструменты) {
+            const toolIcons = {
+                "нож": "",
+                "венчик": "",
+                "огонь": ""
+            };
+            const toolsHtml = subComponents.инструменты.map(t => `${toolIcons[t.toLowerCase()] || '🔧'} ${t}`).join(', ');
+            html += `<li style="margin-top: 5px; color: #7f8c8d; font-size: 12px;">Инструменты: ${toolsHtml}</li>`;
+        }
+        
+        html += `</ul>`;
+    } else {
+        html += ` <span style="color: #27ae60;">(базовый ингредиент)</span>`;
+    }
+    
+    return html;
+}
