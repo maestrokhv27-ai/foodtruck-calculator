@@ -184,6 +184,8 @@ function resetAllFields() {
         DISH_DATABASE.forEach((dish, idx) => { if(document.getElementById(`dish_${idx}`)) document.getElementById(`dish_${idx}`).checked = false; });
         rebuildReadyStockTable();
     }
+} // <--- ВОТ ЭТОЙ СКОБКИ НЕ ХВАТАЛО! ТЕПЕРЬ ВСЁ РАБОТАЕТ
+
 // ==================== ПОКАЗ ПОЛНОЙ ЦЕПОЧКИ ПРИГОТОВЛЕНИЯ ====================
 function showFullRecipeChain() {
     const selectedDishes = [];
@@ -208,15 +210,12 @@ function showFullRecipeChain() {
         html += `<h4 style="margin: 0 0 10px 0; color: #2c3e50;">${dish.name}</h4>`;
         html += `<div style="font-size: 13px; color: #7f8c8d; margin-bottom: 10px;">${dish.craft}</div>`;
         html += `<div style="margin-left: 15px;">`;
-        html += `<strong> Необходимые компоненты:</strong><ul style="margin: 5px 0; padding-left: 20px;">`;
+        html += `<strong>🧪 Необходимые компоненты:</strong><ul style="margin: 5px 0; padding-left: 20px;">`;
         
-        // Показываем все компоненты блюда
         for (let component in dish.recipe) {
             const qty = dish.recipe[component];
             const compName = COMPONENT_NAMES[component] || component;
             html += `<li><strong>${compName}</strong> — ${qty} шт.`;
-            
-            // Рекурсивно показываем из чего состоит компонент
             html += showComponentChain(component, qty, 1);
             html += `</li>`;
         }
@@ -234,36 +233,6 @@ function showComponentChain(component, qty, level) {
     let html = "";
     const indent = "  ".repeat(level);
     
-    // Определяем, из чего состоит компонент
-    const subComponents = getComponentRecipe(component);
-    
-    if (subComponents && Object.keys(subComponents).length > 0) {
-        html += `<ul style="margin: 5px 0; padding-left: 20px; color: #34495e;">`;
-        for (let subComp in subComponents) {
-            const subQty = subComponents[subComp] * qty;
-            const subName = COMPONENT_NAMES[subComp] || subComp;
-            
-            // Проверяем, является ли это базовым ингредиентом
-            if (isBaseIngredient(subComp)) {
-                html += `<li>${indent}↳ <strong>${subName}</strong> — ${subQty} шт. <span style="color: #27ae60;">(базовый ингредиент)</span></li>`;
-            } else {
-                html += `<li>${indent}↳ <strong>${subName}</strong> — ${subQty} шт.`;
-                html += showComponentChain(subComp, subQty, level + 1);
-                html += `</li>`;
-            }
-        }
-        html += `</ul>`;
-    } else {
-        // Это базовый ингредиент
-        const compName = COMPONENT_NAMES[component] || component;
-        html += ` <span style="color: #27ae60;">(базовый ингредиент)</span>`;
-    }
-    
-    return html;
-}
-
-function getComponentRecipe(component) {
-    // Возвращаем рецепт компонента (из чего он состоит)
     const recipes = {
         "овощи_заг": { "овощи": 1 },
         "вареный_рис": { "рис": 1 },
@@ -280,11 +249,28 @@ function getComponentRecipe(component) {
         "масло": { "молоко": 1 }
     };
     
-    return recipes[component] || {};
-}
-
-function isBaseIngredient(component) {
     const baseIngredients = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба"];
-    return baseIngredients.includes(component);
-}
+    const subComponents = recipes[component] || {};
+    
+    if (subComponents && Object.keys(subComponents).length > 0) {
+        html += `<ul style="margin: 5px 0; padding-left: 20px; color: #34495e;">`;
+        for (let subComp in subComponents) {
+            const subQty = subComponents[subComp] * qty;
+            const subName = COMPONENT_NAMES[subComp] || subComp;
+            
+            if (baseIngredients.includes(subComp)) {
+                html += `<li>${indent}↳ <strong>${subName}</strong> — ${subQty} шт. <span style="color: #27ae60;">(базовый ингредиент)</span></li>`;
+            } else {
+                html += `<li>${indent}↳ <strong>${subName}</strong> — ${subQty} шт.`;
+                html += showComponentChain(subComp, subQty, level + 1);
+                html += `</li>`;
+            }
+        }
+        html += `</ul>`;
+    } else {
+        const compName = COMPONENT_NAMES[component] || component;
+        html += ` <span style="color: #27ae60;">(базовый ингредиент)</span>`;
+    }
+    
+    return html;
 }
