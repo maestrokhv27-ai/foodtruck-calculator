@@ -23,12 +23,21 @@ function calculateLogisticsCore() {
         return;
     }
 
+    // Считаем общее количество заготовок на 1 порцию каждого блюда
+    let totalComponentsPerServing = 0;
+    s.forEach(dish => {
+        for (let k in dish.recipe) {
+            totalComponentsPerServing += dish.recipe[k];
+        }
+    });
+
+    // Лимиты и объемы партии
     let r = (l === "1") ? t : (l === "2" ? c : (a + e));
     let n = (l === "3") ? e : t;
-    let i = Math.floor(n / 0.2);
-    let g = Math.floor(i / s.length);
-    let d = Math.floor(t / 0.2);
-    let p = Math.floor(d / s.length);
+    let i = Math.floor(n / 0.2); // всего заготовок в лимите
+    let g = Math.floor(i / totalComponentsPerServing); // порций на блюдо для закупки
+    let d = Math.floor(t / 0.2); // заготовок в фудтраке
+    let p = Math.floor(d / totalComponentsPerServing); // порций на блюдо для фудтрака
 
     const pr = { "овощи": 55, "рис": 45, "мясо": 500, "фрукты": 55, "сахар": 45, "мука": 45, "молоко": 55, "яйцо": 45, "рыба": o };
     
@@ -125,7 +134,7 @@ function calculateLogisticsCore() {
     document.getElementById("error_box").style.display = "none";
     document.getElementById("result_box").style.display = "block";
 
-    let inf = `<p>Выбранных позиций: <strong>${s.length}</strong>. На позицию: <strong>${g} порц.</strong></p>`;
+    let inf = `<p>Выбранных позиций: <strong>${s.length}</strong>. На позицию: <strong>${g} порц.</strong> (заготовок на порцию: ${totalComponentsPerServing})</p>`;
     inf += `<p>🏪 Бюджет на оптовую базу: <b>$${bc.toLocaleString()}</b> | 🎣 Наличка на скупку рыбы: <b style="color:#e67e22;">$${fc.toLocaleString()}</b></p>`;
     inf += `<p><strong>🔥 ОБЩИЙ РАСХОД:</strong> <span style="color:#2980b9;font-weight:bold;">$${(bc + fc).toLocaleString()}</span></p>${hasDef ? htmlShop : "<p>✅ ЗАПАСОВ СЫРЬЯ ХВАТАЕТ!</p>"}`;
     
@@ -150,12 +159,11 @@ function calculateLogisticsCore() {
     
     const walkStatsEl = document.getElementById("walk_stats");
     if (walkStatsEl) {
-        walkStatsEl.innerHTML = (w > 0 && l === "2") ? `<p> Перетаскивание из багажника: <strong>${Math.ceil(w / 10)} ходок</strong> (по ~10 кг за раз).</p>` : `<p>✅ Разгрузка не требуется или выполняется иначе.</p>`;
+        walkStatsEl.innerHTML = (w > 0 && l === "2") ? `<p>🏃 Перетаскивание из багажника: <strong>${Math.ceil(w / 10)} ходок</strong> (по ~10 кг за раз).</p>` : `<p>✅ Разгрузка не требуется или выполняется иначе.</p>`;
     }
 
     let lHtml = `<p><small>*Переложите из багажника кемпера в холодильник фудтрака:</small></p>`;
     
-    // Считаем вес заготовок
     let totalPrepWeight = 0;
     let prepItems = [];
     
@@ -165,15 +173,22 @@ function calculateLogisticsCore() {
         let tQ = orig[k] || qT;
         let rvR = (l === "3") ? Math.max(0, tQ - qT) : 0;
         
-        // Все заготовки весят 0.2 кг
         let itemWeight = qT * 0.2;
         totalPrepWeight += itemWeight;
         
-        prepItems.push(`<li><b>${cN}:</b> 🚚 загрузить в Фудтрак: <strong style="color:#27ae60;">${qT} шт.</strong> ( ${(itemWeight).toFixed(1)} кг ) ${l === "3" ? `| 🏠 в резерв Кемпера: <span style="color:#e67e22;">${Math.round(rvR)} шт.</span>` : ''}</li>`);
+        prepItems.push(`<li><b>${cN}:</b> 🚚 загрузить в Фудтрак: <strong style="color:#27ae60;">${qT} шт.</strong> (${itemWeight.toFixed(1)} кг) ${l === "3" ? `| 🏠 в резерв Кемпера: <span style="color:#e67e22;">${Math.round(rvR)} шт.</span>` : ''}</li>`);
     }
     
-    lHtml += `<p style="background: #e8f4f8; padding: 10px; border-radius: 4px; margin: 10px 0;"><strong>⚖️ Общий вес заготовок: ${totalPrepWeight.toFixed(1)} кг</strong> ${totalPrepWeight > 100 ? '<span style="color: #e74c3c;">️ ПРЕВЫШАЕТ ЛИМИТ БАГАЖНИКА (100 кг)!</span>' : '<span style="color: #27ae60;">✅ Вмещается в багажник</span>'}</p>`;
-    lHtml += `<ul>${prepItems.join('')}</ul>`;
+    let truckLimit = t;
+    let tripsToTruck = Math.ceil(totalPrepWeight / truckLimit);
+    
+    lHtml += `<p style="background: #e8f4f8; padding: 10px; border-radius: 4px; margin: 10px 0;"><strong>⚖️ Общий вес заготовок для фудтрака: ${totalPrepWeight.toFixed(1)} кг</strong> (Лимит фудтрака: ${truckLimit} кг)`;
+    if (totalPrepWeight > truckLimit) {
+        lHtml += `<br><span style="color: #e67e22;">⚠️ Потребуется ${tripsToTruck} рейса(ов) из автодома в фудтрак</span>`;
+    } else {
+        lHtml += `<br><span style="color: #27ae60;">✅ Вмещается за 1 рейс</span>`;
+    }
+    lHtml += `</p><ul>${prepItems.join('')}</ul>`;
     
     document.getElementById("res_truck_loading").innerHTML = lHtml;
 
