@@ -195,4 +195,15 @@ function calculateLogisticsCore() {
     let prof = rev - cog;
     let eHtml = `${htmlPrices}<hr><p>Полный себес: <strong>$${cog.toLocaleString()}</strong> | Выручка: <strong>$${rev.toLocaleString()}</strong></p><p style="font-size:16px;">💰 <b>Чистая прибыль:</b> <span style="color:#27ae60;font-weight:bold;">$${prof.toLocaleString()}</span></p>`;
     document.getElementById("res_economy_block").innerHTML = eHtml;
+        // Добавляем информацию о полной цепочке
+    let chainInfo = `<p style="background: #fff3cd; padding: 10px; border-radius: 4px; border-left: 4px solid #ffc107; margin-top: 15px;">`;
+    chainInfo += `<strong>🔗 Полная цепочка:</strong> Для приготовления <strong>${g} порций</strong> каждого блюда потребуется:`;
+    chainInfo += `<ul style="margin: 5px 0; padding-left: 20px;">`;
+    chainInfo += `<li> <strong>${Object.values(trk).reduce((a, b) => a + b, 0)} заготовок</strong> (общее количество)</li>`;
+    chainInfo += `<li>⚖️ <strong>${(Object.values(trk).reduce((a, b) => a + b, 0) * 0.2).toFixed(1)} кг</strong> готовых заготовок</li>`;
+    chainInfo += `<li>🏭 <strong>${s.length * g} порций</strong> суммарно (${s.length} блюд × ${g} порций)</li>`;
+    chainInfo += `</ul></p>`;
+    
+    eHtml = eHtml.replace('</ul>', chainInfo + '</ul>');
 }
+
