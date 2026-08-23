@@ -274,3 +274,23 @@ function showComponentChain(component, qty, level) {
     
     return html;
 }
+// ==================== ТЁМНАЯ ТЕМА ====================
+function toggleTheme() {
+    document.body.classList.toggle("dark-theme");
+    const isDark = document.body.classList.contains("dark-theme");
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+    document.getElementById("theme_btn").innerText = isDark ? "☀️ Светлая тема" : "🌙 Тёмная тема";
+}
+
+// Автозагрузка темы при старте
+(function() {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+        document.body.classList.add("dark-theme");
+        // Кнопка обновится после загрузки страницы
+        setTimeout(() => {
+            const btn = document.getElementById("theme_btn");
+            if (btn) btn.innerText = "☀️ Светлая тема";
+        }, 100);
+    }
+})();
