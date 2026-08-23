@@ -152,15 +152,28 @@ function calculateLogisticsCore() {
         walkStatsEl.innerHTML = (w > 0 && l === "2") ? `<p> Перетаскивание из багажника: <strong>${Math.ceil(w / 10)} ходок</strong> (по ~10 кг за раз).</p>` : `<p>✅ Разгрузка не требуется или выполняется иначе.</p>`;
     }
 
-    let lHtml = `<p><small>*Переложите из багажника кемпера в холодильник фудтрака:</small></p><ul>`;
+    let lHtml = `<p><small>*Переложите из багажника кемпера в холодильник фудтрака:</small></p>`;
+    
+    // Считаем вес заготовок
+    let totalPrepWeight = 0;
+    let prepItems = [];
+    
     for (let k in trk) {
         let cN = COMPONENT_NAMES[k] || k;
         let qT = trk[k];
         let tQ = orig[k] || qT;
         let rvR = (l === "3") ? Math.max(0, tQ - qT) : 0;
-        lHtml += `<li><b>${cN}:</b> 🚚 загрузить в Фудтрак: <strong style="color:#27ae60;">${qT} шт.</strong> ${l === "3" ? `| 🏠 в резерв Кемпера: <span style="color:#e67e22;">${Math.round(rvR)} шт.</span>` : ''}</li>`;
+        
+        // Все заготовки весят 0.2 кг
+        let itemWeight = qT * 0.2;
+        totalPrepWeight += itemWeight;
+        
+        prepItems.push(`<li><b>${cN}:</b> 🚚 загрузить в Фудтрак: <strong style="color:#27ae60;">${qT} шт.</strong> ( ${(itemWeight).toFixed(1)} кг ) ${l === "3" ? `| 🏠 в резерв Кемпера: <span style="color:#e67e22;">${Math.round(rvR)} шт.</span>` : ''}</li>`);
     }
-    lHtml += "</ul>";
+    
+    lHtml += `<p style="background: #e8f4f8; padding: 10px; border-radius: 4px; margin: 10px 0;"><strong>⚖️ Общий вес заготовок: ${totalPrepWeight.toFixed(1)} кг</strong> ${totalPrepWeight > 100 ? '<span style="color: #e74c3c;">️ ПРЕВЫШАЕТ ЛИМИТ БАГАЖНИКА (100 кг)!</span>' : '<span style="color: #27ae60;">✅ Вмещается в багажник</span>'}</p>`;
+    lHtml += `<ul>${prepItems.join('')}</ul>`;
+    
     document.getElementById("res_truck_loading").innerHTML = lHtml;
 
     let prof = rev - cog;
