@@ -132,7 +132,8 @@ function calculateLogisticsCore() {
     document.getElementById("res_shopping_list").innerHTML = inf;
 
     let trips = Math.ceil(w / r);
-    let tHtml = `<p>⚖️ Вес закупки: <strong>${w.toFixed(1)} кг</strong> (Лимит транспорта: ${r} кг).</p>`;
+    let tHtml = `<p>⚖️ Вес сырья для закупки: <strong>${w.toFixed(1)} кг</strong> (Лимит транспорта: ${r} кг).</p>`;
+    tHtml += `<p style="font-size: 13px; color: #7f8c8d;"><small>*Это вес сырья с базы. Вес готовых заготовок будет рассчитан в блоке 3.</small></p>`;
     
     if (l === "1" && w > r) {
         document.getElementById("error_box").style.display = "block";
