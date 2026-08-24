@@ -3,13 +3,43 @@
 // Объединяем три части меню в единую базу данных
 const DISH_DATABASE = [...DISH_DATABASE_P1, ...DISH_DATABASE_P2, ...DISH_DATABASE_P3];
 
+// ==================== УПРАВЛЕНИЕ ВКЛАДКАМИ ====================
+function openTab(tabId, btnElement) {
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+        tab.style.display = 'none';
+    });
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    const activeTab = document.getElementById(tabId);
+    if (activeTab) {
+        activeTab.style.display = 'block';
+        setTimeout(() => activeTab.classList.add('active'), 10);
+    }
+    if (btnElement) {
+        btnElement.classList.add('active');
+    }
+    
+    // Если открыли рабочую станцию - инициализируем POS
+    if (tabId === 'tab-workstation') {
+        if (typeof initPOS === 'function') initPOS();
+    }
+}
+
 window.onload = function() {
     initMenuCheckboxes();
-    switchBusinessLogic(); // Настройка под выбранную логику
-    loadFromLocalStorage(); // Автозагрузка остатков с ПК
+    switchBusinessLogic();
+    loadFromLocalStorage();
+    // Загружаем статистику смены
+    const savedShift = localStorage.getItem("shift_stats");
+    if (savedShift && typeof shiftStats !== 'undefined') {
+        shiftStats = JSON.parse(savedShift);
+        if (typeof updateShiftDisplay === 'function') updateShiftDisplay();
+    }
 };
 
-// Сборка меню: сохраняет галочку в память СРАЗУ при клике на неё
 function initMenuCheckboxes() {
     const container = document.getElementById("menu_checkboxes");
     if (!container) return;
@@ -32,7 +62,6 @@ function initMenuCheckboxes() {
         grouped[cat].forEach(item => {
             const label = document.createElement("label");
             label.className = "menu-item";
-            // Мгновенная фиксация в LocalStorage при изменении состояния
             label.innerHTML = `<input type="checkbox" id="dish_${item.index}" onchange="localStorage.setItem('dish_${item.index}', this.checked); rebuildReadyStockTable();"> ${item.dish.name}`;
             container.appendChild(label);
         });
@@ -57,33 +86,18 @@ function switchBusinessLogic() {
         if(carLimit) carLimit.style.display = "none";
         if(rvStorage) rvStorage.style.display = "none";
         if(rvCabinet) rvCabinet.style.display = "none";
-        
-        if(thRaw1) thRaw1.innerText = "Остаток в Траке";
-        if(thRaw2) thRaw2.innerText = "Остаток в Траке";
-        if(b3Title) b3Title.innerHTML = "🥣 2. Текущие остатки готовых заготовок в Фудтраке (в порциях):";
-        if(b4Title) b4Title.innerHTML = "📦 3. Текущие остатки сырья в Фудтраке / Инвентаре (в штуках):";
     } 
     else if (logic === "2") {
         if(trkLimit) trkLimit.style.display = "flex";
         if(carLimit) carLimit.style.display = "flex";
         if(rvStorage) rvStorage.style.display = "none";
         if(rvCabinet) rvCabinet.style.display = "none";
-        
-        if(thRaw1) thRaw1.innerText = "Остаток в Траке / Авто";
-        if(thRaw2) thRaw2.innerText = "Остаток в Траке / Авто";
-        if(b3Title) b3Title.innerHTML = "🥣 2. Текущие остатки готовых заготовок в Фудтраке (в порциях):";
-        if(b4Title) b4Title.innerHTML = "📦 3. Текущие остатки сырья в Авто / Траке (в штуках):";
     } 
     else if (logic === "3") {
         if(trkLimit) trkLimit.style.display = "flex";
         if(carLimit) carLimit.style.display = "flex";
         if(rvStorage) rvStorage.style.display = "flex";
         if(rvCabinet) rvCabinet.style.display = "flex";
-        
-        if(thRaw1) thRaw1.innerText = "В шкафу Автодома";
-        if(thRaw2) thRaw2.innerText = "В шкафу Автодома";
-        if(b3Title) b3Title.innerHTML = "🥣 2. Текущие остатки чистых заготовок в Траке / Автодоме (в порциях):";
-        if(b4Title) b4Title.innerHTML = "📦 3. Текущие остатки сырья в шкафу Автодома (в штуках):";
     }
     rebuildReadyStockTable();
 }
@@ -184,8 +198,7 @@ function resetAllFields() {
         rawIds.forEach(id => { if(document.getElementById(`stock_${id}`)) document.getElementById(`stock_${id}`).value = 0; });
         DISH_DATABASE.forEach((dish, idx) => { if(document.getElementById(`dish_${idx}`)) document.getElementById(`dish_${idx}`).checked = false; });
         rebuildReadyStockTable();
-        // Также обнуляем кассу при полном сбросе
-        if (typeof resetCashRegister === 'function') resetCashRegister();
+        if (typeof resetShiftData === 'function') resetShiftData();
     }
 }
 
@@ -194,22 +207,21 @@ function toggleTheme() {
     document.body.classList.toggle("dark-theme");
     const isDark = document.body.classList.contains("dark-theme");
     localStorage.setItem("theme", isDark ? "dark" : "light");
-    document.getElementById("theme_btn").innerText = isDark ? "☀️ Светлая тема" : "🌙 Тёмная тема";
+    document.getElementById("theme_btn").innerText = isDark ? "☀️ Светлая" : "🌙 Тёмная";
 }
 
-// Автозагрузка темы при старте
 (function() {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark") {
         document.body.classList.add("dark-theme");
         setTimeout(() => {
             const btn = document.getElementById("theme_btn");
-            if (btn) btn.innerText = "☀️ Светлая тема";
+            if (btn) btn.innerText = "☀️ Светлая";
         }, 100);
     }
 })();
 
-// ==================== ЭКСПОРТ / ИМПОРТ ДАННЫХ ====================
+// ==================== ЭКСПОРТ / ИМПОРТ ====================
 function exportData() {
     const data = {};
     const keys = [
@@ -235,6 +247,8 @@ function exportData() {
     document.querySelectorAll(".ready-input").forEach(el => {
         data[el.id] = el.value;
     });
+    
+    data["shift_stats"] = localStorage.getItem("shift_stats") || '{"revenue":0,"profit":0,"orders":0}';
 
     const json = JSON.stringify(data);
     const encoded = btoa(unescape(encodeURIComponent(json)));
@@ -324,6 +338,14 @@ function applyImport() {
                 if (el) el.value = data[key];
             }
         }
+        
+        if (data["shift_stats"]) {
+            localStorage.setItem("shift_stats", data["shift_stats"]);
+            if (typeof shiftStats !== 'undefined') {
+                shiftStats = JSON.parse(data["shift_stats"]);
+                if (typeof updateShiftDisplay === 'function') updateShiftDisplay();
+            }
+        }
 
         switchBusinessLogic();
         rebuildReadyStockTable();
@@ -344,27 +366,4 @@ function applyImport() {
 
 function closeSyncModal() {
     document.getElementById("sync_modal").style.display = "none";
-}
-// ==================== УПРАВЛЕНИЕ ВКЛАДКАМИ ====================
-function openTab(tabId, btnElement) {
-    // Скрываем все вкладки
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-        tab.style.display = 'none';
-    });
-    // Убираем активный класс у всех кнопок
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Показываем нужную вкладку и подсвечиваем кнопку
-    const activeTab = document.getElementById(tabId);
-    if (activeTab) {
-        activeTab.style.display = 'block';
-        // Небольшая задержка для срабатывания CSS анимации
-        setTimeout(() => activeTab.classList.add('active'), 10);
-    }
-    if (btnElement) {
-        btnElement.classList.add('active');
-    }
 }
