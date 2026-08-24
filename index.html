@@ -147,6 +147,35 @@ body.dark-theme select { background: #16213e; color: #e0e0e0; border-color: #0f3
         width: 100px;
         text-align: right;
     }
+    
+    /* Добавляем подписи для полей на мобильном */
+    #table_ready_stock tr:nth-child(odd) td:nth-child(2):before {
+        content: "В Траке:";
+        font-weight: bold;
+        color: #27ae60;
+        margin-right: 10px;
+    }
+    
+    #table_ready_stock tr:nth-child(even) td:nth-child(2):before {
+        content: "В Траке:";
+        font-weight: bold;
+        color: #27ae60;
+        margin-right: 10px;
+    }
+    
+    #table_ready_stock tr:nth-child(odd) td:nth-child(3):before {
+        content: "В Автодоме:";
+        font-weight: bold;
+        color: #e67e22;
+        margin-right: 10px;
+    }
+    
+    #table_ready_stock tr:nth-child(even) td:nth-child(3):before {
+        content: "В Автодоме:";
+        font-weight: bold;
+        color: #e67e22;
+        margin-right: 10px;
+    }
 }
     </style>
 </head>
