@@ -169,7 +169,7 @@ function saveToLocalStorage() {
     
     DISH_DATABASE.forEach((dish, idx) => { if(document.getElementById(`dish_${idx}`)) localStorage.setItem(`dish_${idx}`, document.getElementById(`dish_${idx}`).checked); });
     
-    const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба"];
+    const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"];
     rawIds.forEach(id => { if(document.getElementById(`stock_${id}`)) localStorage.setItem(`stock_${id}`, document.getElementById(`stock_${id}`).value); });
     
     document.querySelectorAll(".ready-input").forEach(el => { localStorage.setItem(el.id, el.value); });
@@ -193,7 +193,7 @@ function loadFromLocalStorage() {
         }
     });
     
-    const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба"];
+    const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"];
     rawIds.forEach(id => { if(localStorage.getItem(`stock_${id}`) !== null && document.getElementById(`stock_${id}`)) document.getElementById(`stock_${id}`).value = localStorage.getItem(`stock_${id}`); });
     
     rebuildReadyStockTable();
@@ -202,7 +202,7 @@ function loadFromLocalStorage() {
 function resetAllFields() {
     if(confirm("🧹 Полностью обнулить все склады и заготовки в калькуляторе?")) {
         localStorage.clear();
-        const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба"];
+        const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"];
         rawIds.forEach(id => { if(document.getElementById(`stock_${id}`)) document.getElementById(`stock_${id}`).value = 0; });
         DISH_DATABASE.forEach((dish, idx) => { if(document.getElementById(`dish_${idx}`)) document.getElementById(`dish_${idx}`).checked = false; });
         rebuildReadyStockTable();
@@ -246,7 +246,7 @@ function exportData() {
         if (el) data[`dish_${idx}`] = el.checked;
     });
 
-    const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба"];
+    const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"];
     rawIds.forEach(id => {
         const el = document.getElementById(`stock_${id}`);
         if (el) data[`stock_${id}`] = el.value;
@@ -330,7 +330,7 @@ function applyImport() {
             }
         });
 
-        const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба"];
+        const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"];
         rawIds.forEach(id => {
             if (data[`stock_${id}`] !== undefined) {
                 localStorage.setItem(`stock_${id}`, data[`stock_${id}`]);
