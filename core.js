@@ -34,6 +34,10 @@ window.onload = function() {
     initMenuCheckboxes();
     switchBusinessLogic();
     loadFromLocalStorage();
+    // Инициализация системы учёта остатков
+    if (typeof initStockFromInventory === 'function') {
+        initStockFromInventory();
+    }
     // Загружаем статистику смены
     const savedShift = localStorage.getItem("shift_stats");
     if (savedShift && typeof shiftStats !== 'undefined') {
