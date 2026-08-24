@@ -52,6 +52,102 @@ body.dark-theme .error-card { background-color: #4a1a1a; border-color: #e74c3c; 
 body.dark-theme #recipe_chain_box { background: #1a1a2e; border-color: #8e44ad; }
 body.dark-theme #recipe_chain_box h3 { color: #a569bd; }
 body.dark-theme select { background: #16213e; color: #e0e0e0; border-color: #0f3460; }
+/* Адаптивность таблиц для мобильных устройств */
+@media screen and (max-width: 768px) {
+    /* Таблица остатков сырья */
+    #table_raw_stock, 
+    #table_raw_stock thead, 
+    #table_raw_stock tbody, 
+    #table_raw_stock tr {
+        display: block;
+        width: 100%;
+    }
+    
+    #table_raw_stock thead {
+        display: none; /* Скрываем шапку на мобильном */
+    }
+    
+    #table_raw_stock tr {
+        margin-bottom: 15px;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    #table_raw_stock td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border: none;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    #table_raw_stock td:last-child {
+        border-bottom: none;
+    }
+    
+    #table_raw_stock td input[type="number"] {
+        width: 100px;
+        text-align: right;
+    }
+    
+    /* Добавляем подписи перед каждым значением */
+    #table_raw_stock td:nth-child(1):before {
+        content: "Продукт:";
+        font-weight: bold;
+        color: #555;
+    }
+    
+    #table_raw_stock td:nth-child(2):before {
+        content: "Цена:";
+        font-weight: bold;
+        color: #555;
+    }
+    
+    #table_raw_stock td:nth-child(3):before {
+        content: "Остаток:";
+        font-weight: bold;
+        color: #555;
+    }
+    
+    /* Таблица готовых заготовок */
+    #table_ready_stock, 
+    #table_ready_stock thead, 
+    #table_ready_stock tbody, 
+    #table_ready_stock tr {
+        display: block;
+        width: 100%;
+    }
+    
+    #table_ready_stock thead {
+        display: none;
+    }
+    
+    #table_ready_stock tr {
+        margin-bottom: 15px;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+    }
+    
+    #table_ready_stock td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border: none;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    #table_ready_stock td input[type="number"] {
+        width: 100px;
+        text-align: right;
+    }
+}
     </style>
 </head>
 <body>
