@@ -211,8 +211,30 @@ function calculateLogisticsCore() {
 
     initPOS();
     
-    const procurementBtn = document.querySelector('.tab-btn[onclick*="tab-procurement"]');
-    if(procurementBtn) openTab('tab-procurement', procurementBtn);
+    // Надежное переключение на вкладку закупки
+    setTimeout(() => {
+        const allTabs = document.querySelectorAll('.tab-content');
+        const allBtns = document.querySelectorAll('.tab-btn');
+        
+        allTabs.forEach(tab => {
+            tab.classList.remove('active');
+            tab.style.display = 'none';
+        });
+        allBtns.forEach(btn => btn.classList.remove('active'));
+        
+        const procurementTab = document.getElementById('tab-procurement');
+        if (procurementTab) {
+            procurementTab.style.display = 'block';
+            setTimeout(() => procurementTab.classList.add('active'), 10);
+        }
+        
+        // Подсвечиваем кнопку "Закупка"
+        allBtns.forEach(btn => {
+            if (btn.innerText.includes('Закупка')) {
+                btn.classList.add('active');
+            }
+        });
+    }, 100);
 }
 
 // ==================== ЦЕПОЧКА ПРИГОТОВЛЕНИЯ ====================
