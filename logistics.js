@@ -395,7 +395,6 @@ function renderActiveOrder() {
     
     if (block) block.style.display = "block";
     let itemsHtml = "";
-    let kitchenNeeds = {};
     let currentTotal = 0;
 
     indices.forEach(idxStr => {
@@ -405,21 +404,56 @@ function renderActiveOrder() {
         const price = lastCalculatedPrices[idx] || dish.price;
         itemsHtml += `<div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>${dish.name} x${qty}</span><strong>$${(price * qty).toLocaleString()}</strong></div>`;
         currentTotal += price * qty;
-        for (let comp in dish.recipe) {
-            const compQty = dish.recipe[comp] * qty;
-            kitchenNeeds[comp] = (kitchenNeeds[comp] || 0) + compQty;
-        }
     });
 
     if (itemsDiv) itemsDiv.innerHTML = itemsHtml;
     if (totalEl) totalEl.innerText = "$" + currentTotal.toLocaleString();
 
-    let ticketHtml = "";
-    for (let comp in kitchenNeeds) {
-        const name = COMPONENT_NAMES[comp] || comp;
-        ticketHtml += `<div>• ${name}: <strong>${kitchenNeeds[comp]} шт.</strong></div>`;
-    }
-    if (ticketDiv) ticketDiv.innerHTML = ticketHtml || "Нет компонентов";
+    // ЧЕК КУХНИ
+    let ticketHtml = '<div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #f39c12; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);">';
+    ticketHtml += '<div style="font-size: 20px; font-weight: bold; color: #d35400; margin-bottom: 15px; text-align: center;">🍳 ЧЕК КУХНИ</div>';
+    
+    indices.forEach(idxStr => {
+        const idx = parseInt(idxStr);
+        const qty = currentOrder[idx];
+        const dish = DISH_DATABASE[idx];
+        
+        ticketHtml += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; border-left: 4px solid #e67e22;">`;
+        ticketHtml += `<div style="font-size: 18px; font-weight: bold; color: #2c3e50;">${dish.name}</div>`;
+        ticketHtml += `<div style="font-size: 24px; font-weight: bold; color: #e67e22; background: #fff3cd; padding: 5px 15px; border-radius: 20px; min-width: 40px; text-align: center;">x${qty}</div>`;
+        ticketHtml += `</div>`;
+    });
+    
+    ticketHtml += '</div>';
+
+    // РЕЦЕПТЫ ТОЛЬКО ДЛЯ БЛЮД ИЗ ЧЕКА
+    ticketHtml += '<div style="background: #f8f9fa; border: 2px solid #8e44ad; border-radius: 8px; padding: 15px;">';
+    ticketHtml += '<div style="font-size: 18px; font-weight: bold; color: #8e44ad; margin-bottom: 15px; text-align: center;">📖 Рецепты для этого заказа</div>';
+    
+    indices.forEach(idxStr => {
+        const idx = parseInt(idxStr);
+        const dish = DISH_DATABASE[idx];
+        
+        ticketHtml += `<div style="background: white; border-top: 4px solid #27ae60; border: 1px solid #e0e0e0; padding: 12px; margin-bottom: 12px; border-radius: 4px;">`;
+        ticketHtml += `<h4 style="margin: 0 0 8px 0; color: #2c3e50; font-size: 16px;">${dish.name}</h4>`;
+        ticketHtml += `<div style="font-size: 12px; color: #7f8c8d; margin-bottom: 10px; font-style: italic;">${dish.craft}</div>`;
+        ticketHtml += `<div style="margin-left: 10px;">`;
+        ticketHtml += `<strong style="color: #27ae60; font-size: 13px;">🧪 Компоненты:</strong>`;
+        ticketHtml += `<ol style="margin: 8px 0; padding-left: 20px; line-height: 1.6; font-size: 14px;">`;
+        
+        for (let component in dish.recipe) {
+            const qty = dish.recipe[component];
+            const compName = COMPONENT_NAMES[component] || component;
+            ticketHtml += `<li style="margin-bottom: 6px;"><strong>${compName}</strong> — ${qty} шт.`;
+            ticketHtml += showComponentChain(component, qty, 1);
+            ticketHtml += `</li>`;
+        }
+        ticketHtml += `</ol></div></div>`;
+    });
+    
+    ticketHtml += '</div>';
+    
+    if (ticketDiv) ticketDiv.innerHTML = ticketHtml;
 }
 
 function completeCurrentOrder() {
