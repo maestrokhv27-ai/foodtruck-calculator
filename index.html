@@ -315,8 +315,43 @@ body.dark-theme select { background: #16213e; color: #e0e0e0; border-color: #0f3
         <h3>👨‍🍳 3. Цеховой план загрузки Фудтрака перед выездом</h3>
         <div id="res_truck_loading"></div>
         
-        <h3>💰 4. Экономический потенциал смены</h3>
+                <h3>💰 4. Экономический потенциал смены</h3>
         <div id="res_economy_block"></div>
+        
+        <h3>🧾 5. Кассовый аппарат — учёт продаж</h3>
+        <div id="cash_register_block">
+            <p style="color: #7f8c8d; font-size: 14px;">Введите количество проданных порций по каждому блюду. Выручка считается автоматически.</p>
+            <div id="cash_register_table"></div>
+            <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #27ae60;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Продано порций:</span>
+                    <strong id="cash_total_qty">0</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Выручка:</span>
+                    <strong id="cash_total_revenue" style="color: #27ae60; font-size: 18px;">$0</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Себестоимость:</span>
+                    <strong id="cash_total_cost">$0</strong>
+                </div>
+                <hr style="margin: 10px 0;">
+                <div style="display: flex; justify-content: space-between; font-size: 18px;">
+                    <span>💰 Чистая прибыль:</span>
+                    <strong id="cash_total_profit" style="color: #27ae60;">$0</strong>
+                </div>
+            </div>
+            <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="finishShift()" style="background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; min-width: 150px;">✅ Завершить смену</button>
+                <button onclick="resetCashRegister()" style="background: #e67e22; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; min-width: 150px;">🔄 Обнулить кассу</button>
+            </div>
+        </div>
+        
+        <div id="shift_report_block" style="display: none; margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; color: white;">
+            <h3 style="margin-top: 0; color: white;">📊 Отчёт по смене</h3>
+            <div id="shift_report_content"></div>
+            <button onclick="exportShiftReport()" style="margin-top: 15px; background: white; color: #764ba2; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">📤 Экспортировать отчёт</button>
+        </div>
     </div>
 </div>
 
