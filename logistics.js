@@ -198,7 +198,7 @@ function calculateLogisticsCore() {
         walkStats.innerHTML = (w > 0 && l === "2") ? `<p>🏃 Перетаскивание из багажника: <strong>${Math.ceil(w / 10)} ходок</strong> (по ~10 кг за раз).</p>` : `<p>✅ Разгрузка не требуется или выполняется иначе.</p>`;
     }
 
-    let lHtml = `<p><small>*Переложите из багажника кемпера в холодильник фудтрака:</small></p>`;
+    let lHtml = `<p><small>*Переложите из хранилища в холодильник фудтрака:</small></p>`;
     let totalPrepWeight = 0;
     let prepItems = [];
     
@@ -206,12 +206,13 @@ function calculateLogisticsCore() {
         let cN = COMPONENT_NAMES[k] || k;
         let qT = trk[k];
         let tQ = orig[k] || qT;
-        let rvR = (l === "3") ? Math.max(0, tQ - qT) : 0;
+        let rvR = (l === "3" || l === "4") ? Math.max(0, tQ - qT) : 0;
         
         let itemWeight = qT * 0.2;
         totalPrepWeight += itemWeight;
         
-        prepItems.push(`<li><b>${cN}:</b> 🚚 загрузить в Фудтрак: <strong style="color:#27ae60;">${qT} шт.</strong> (${itemWeight.toFixed(1)} кг) ${l === "3" ? `| 🏠 в резерв Кемпера: <span style="color:#e67e22;">${Math.round(rvR)} шт.</span>` : ''}</li>`);
+        let storageLabel = (l === "3" || l === "4") ? `| 🏠 в резерв Кемпера: <span style="color:#e67e22;">${Math.round(rvR)} шт.</span>` : '';
+        prepItems.push(`<li><b>${cN}:</b> 🚚 загрузить в Фудтрак: <strong style="color:#27ae60;">${qT} шт.</strong> (${itemWeight.toFixed(1)} кг) ${storageLabel}</li>`);    
     }
     
     let truckLimit = t;
