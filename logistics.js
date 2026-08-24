@@ -47,7 +47,7 @@ function calculateLogisticsCore() {
     // Лимит транспорта для закупки:
     // Режим 1: закупаем прямо в фудтрак (t)
     // Режим 2 и 3: закупаем на легковом авто (c), потом перекладываем
-    let r = (l === "1") ? t : c;
+    let r = (l === "1") ? t : (l === "4" ? e : c);
     let n = (l === "3") ? e : t;
     let i = Math.floor(n / 0.2);
     let g = Math.floor(i / totalComponentsPerServing);
