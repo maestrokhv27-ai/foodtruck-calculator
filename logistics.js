@@ -1,6 +1,9 @@
+// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ КАССЫ ====================
+let lastCalculatedPrices = {};
+let lastCalculatedCosts = {};
+
+// ==================== ОСНОВНОЙ РАСЧЁТ ЛОГИСТИКИ ====================
 function calculateLogisticsCore() {
-    let lastCalculatedPrices = {};
-    let lastCalculatedCosts = {};
     const l = document.getElementById("business_logic").value;
     const t = parseFloat(document.getElementById("cfg_truck_fridge").value) || 100;
     const c = parseFloat(document.getElementById("cfg_car_trunk").value) || 245;
@@ -25,7 +28,6 @@ function calculateLogisticsCore() {
         return;
     }
 
-    // Считаем общее количество заготовок на 1 порцию каждого блюда
     let totalComponentsPerServing = 0;
     s.forEach(dish => {
         for (let k in dish.recipe) {
@@ -33,17 +35,16 @@ function calculateLogisticsCore() {
         }
     });
 
-    // Лимиты и объемы партии
     let r = (l === "1") ? t : (l === "2" ? c : (a + e));
     let n = (l === "3") ? e : t;
-    let i = Math.floor(n / 0.2); // всего заготовок в лимите
-    let g = Math.floor(i / totalComponentsPerServing); // порций на блюдо для закупки
-    let d = Math.floor(t / 0.2); // заготовок в фудтраке
-    let p = Math.floor(d / totalComponentsPerServing); // порций на блюдо для фудтрака
+    let i = Math.floor(n / 0.2);
+    let g = Math.floor(i / totalComponentsPerServing);
+    let d = Math.floor(t / 0.2);
+    let p = Math.floor(d / totalComponentsPerServing);
 
     const pr = { "овощи": 55, "рис": 45, "мясо": 500, "фрукты": 55, "сахар": 45, "мука": 45, "молоко": 55, "яйцо": 45, "рыба": o };
     
-    let rawR = { "овощи": 0, "рис": 0, "мясо": 0, "фрукты": 0, "сахар": 0, "мука": 0, "молоко": 0, "яйцо": 0, "рыба": 0 };
+    let rawR = { "овощи": 0, "рис": 0, "мясо": 0, "фрукты": 0, "сахар": 0, "мука": 0, "молоко": 0, "яйцо": 0, "рыба": 0, "масло": 0, "тесто": 0 };
     let req = {};
     let trk = {};
     let rev = 0;
@@ -51,14 +52,13 @@ function calculateLogisticsCore() {
     let htmlPrices = "<strong>📋 ЦЕННИКИ ДЛЯ ВИТРИНЫ ФУДТРАКА:</strong><ul style='list-style-type:none;padding-left:0;'>";
 
     s.forEach(dish => {
-        let f = { "овощи": 0, "рис": 0, "мясо": 0, "фрукты": 0, "сахар": 0, "мука": 0, "молоко": 0, "яйцо": 0, "рыба": 0, "масло": 0 };
+        let f = { "овощи": 0, "рис": 0, "мясо": 0, "фрукты": 0, "сахар": 0, "мука": 0, "молоко": 0, "яйцо": 0, "рыба": 0, "масло": 0, "тесто": 0 };
         for (let k in dish.recipe) {
             let q = dish.recipe[k] * g;
             req[k] = (req[k] || 0) + q;
             let qT = dish.recipe[k] * p;
             trk[k] = (trk[k] || 0) + qT;
 
-            if (k === "овощи_заг") f["овощи"] += dish.recipe[k];
             if (k === "вареный_рис") f["рис"] += dish.recipe[k];
             if (k === "мясной_фарш") f["мясо"] += dish.recipe[k];
             if (k === "сыр") f["молоко"] += dish.recipe[k];
@@ -83,9 +83,14 @@ function calculateLogisticsCore() {
         let sp = Math.round(cp * (1 + m / 100));
         cog += g * cp;
         rev += g * sp;
-        lastCalculatedPrices[idx] = sp;
-        lastCalculatedCosts[idx] = cp;
-        htmlPrices += `<li style='margin-bottom:8px;padding:8px;background:#fff;border-radius:4px;border-left:4px solid #2980b9;'>💵 <b>${dish.name}</b> ➜ Цена: <strong style="color:#2980b9;">$${sp}</strong> <small>(себес: $${cp})</small> | Смена: <b>${g} порц.</b></li>`;    });
+        
+        // ИСПРАВЛЕНО: получаем правильный индекс из общей базы
+        const originalIdx = DISH_DATABASE.indexOf(dish);
+        lastCalculatedPrices[originalIdx] = sp;
+        lastCalculatedCosts[originalIdx] = cp;
+        
+        htmlPrices += `<li style='margin-bottom:8px;padding:8px;background:#fff;border-radius:4px;border-left:4px solid #2980b9;'>💵 <b>${dish.name}</b> ➜ Цена: <strong style="color:#2980b9;">$${sp}</strong> <small>(себес: $${cp})</small> | Смена: <b>${g} порц.</b></li>`;
+    });
     htmlPrices += "</ul>";
 
     let orig = JSON.parse(JSON.stringify(req));
@@ -135,7 +140,6 @@ function calculateLogisticsCore() {
                 htmlShop += `<li><strong>${k.toUpperCase()}:</strong> ${bx} кор. (${bx * 10} порц.) — $${(bx * 10 * pr[k]).toLocaleString()}</li>`;
             }
         }
-        buildCashRegister();
     }
     htmlShop += "</ul>";
 
@@ -171,7 +175,6 @@ function calculateLogisticsCore() {
     }
 
     let lHtml = `<p><small>*Переложите из багажника кемпера в холодильник фудтрака:</small></p>`;
-    
     let totalPrepWeight = 0;
     let prepItems = [];
     
@@ -203,9 +206,11 @@ function calculateLogisticsCore() {
     let prof = rev - cog;
     let eHtml = `${htmlPrices}<hr><p>Полный себес: <strong>$${cog.toLocaleString()}</strong> | Выручка: <strong>$${rev.toLocaleString()}</strong></p><p style="font-size:16px;">💰 <b>Чистая прибыль:</b> <span style="color:#27ae60;font-weight:bold;">$${prof.toLocaleString()}</span></p>`;
     document.getElementById("res_economy_block").innerHTML = eHtml;
+
+    // ИСПРАВЛЕНО: вызываем построение кассы один раз в самом конце
+    buildCashRegister();
 }
 
-// ==================== ПОКАЗ ПОЛНОЙ ЦЕПОЧКИ ПРИГОТОВЛЕНИЯ ====================
 // ==================== ПОКАЗ ПОЛНОЙ ЦЕПОЧКИ ПРИГОТОВЛЕНИЯ ====================
 function showFullRecipeChain() {
     const selectedDishes = [];
@@ -222,11 +227,9 @@ function showFullRecipeChain() {
 
     const box = document.getElementById("recipe_chain_box");
     const content = document.getElementById("recipe_chain_content");
-    
     let html = "";
     
-    selectedDishes.forEach((dish, dishIdx) => {
-        // Заголовок блюда с зелёной полосой сверху
+    selectedDishes.forEach((dish) => {
         html += `<div style="background: white; border-top: 4px solid #27ae60; border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 15px; border-radius: 4px;">`;
         html += `<h4 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 18px;">${dish.name}</h4>`;
         html += `<div style="font-size: 13px; color: #7f8c8d; margin-bottom: 15px; font-style: italic;">${dish.craft}</div>`;
@@ -243,7 +246,6 @@ function showFullRecipeChain() {
             html += showComponentChain(component, qty, 1, compIndex);
             html += `</li>`;
         }
-        
         html += `</ol></div></div>`;
     });
     
@@ -254,7 +256,6 @@ function showFullRecipeChain() {
 
 function showComponentChain(component, qty, level, parentIndex) {
     let html = "";
-    
     const recipes = {
         "вареный_рис": { "рис": 1, "вода": 1, "инструменты": ["огонь"] },
         "картофельное_пюре": { "овощи": 1, "масло": 1, "молоко": 1, "инструменты": ["венчик", "огонь"] },
@@ -274,7 +275,6 @@ function showComponentChain(component, qty, level, parentIndex) {
     };
     
     const baseIngredients = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "вода"];
-    
     const subComponents = recipes[component] || {};
     
     if (Object.keys(subComponents).length > 0) {
@@ -295,32 +295,20 @@ function showComponentChain(component, qty, level, parentIndex) {
             }
         }
         
-        // Показываем инструменты для этого компонента
         if (subComponents.инструменты) {
-            const toolIcons = {
-                "нож": "🔪",
-                "венчик": "🥄",
-                "огонь": "🔥"
-            };
+            const toolIcons = { "нож": "🔪", "венчик": "🥄", "огонь": "🔥" };
             const toolsHtml = subComponents.инструменты.map(t => {
                 const icon = toolIcons[t.toLowerCase()] || '🔧';
                 return `<span style="display: inline-flex; align-items: center; margin: 2px 5px; padding: 3px 8px; background: #fff3cd; border-radius: 4px; font-size: 14px;">${icon} ${t}</span>`;
             }).join(' ');
             html += `<li style="margin-top: 5px; color: #555;">Инструменты: ${toolsHtml}</li>`;
         }
-        
         html += `</ol>`;
     }
-    
     return html;
 }
+
 // ==================== КАССОВЫЙ АППАРАТ ====================
-let lastCalculatedPrices = {}; // Храним рассчитанные цены
-
-// Модифицируем calculateLogisticsCore — сохраняем цены
-const originalCalculate = calculateLogisticsCore;
-// (мы просто добавим сохранение в существующую функцию — см. ниже)
-
 function buildCashRegister() {
     const container = document.getElementById("cash_register_table");
     if (!container) return;
@@ -338,7 +326,6 @@ function buildCashRegister() {
     }
     
     let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
-    
     selectedDishes.forEach(({ dish, idx }) => {
         const price = lastCalculatedPrices[idx] || 0;
         const cost = lastCalculatedCosts[idx] || 0;
@@ -352,13 +339,8 @@ function buildCashRegister() {
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <label style="font-size: 13px;">Продано:</label>
-                    <input type="number" 
-                           id="cash_qty_${idx}" 
-                           value="${savedQty}" 
-                           min="0" 
-                           onchange="updateCashRegister()"
-                           oninput="updateCashRegister()"
-                           style="width: 70px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-size: 16px; font-weight: bold;">
+                    <input type="number" id="cash_qty_${idx}" value="${savedQty}" min="0" 
+                           oninput="updateCashRegister()" style="width: 70px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-size: 16px; font-weight: bold;">
                     <span style="font-size: 13px; color: #7f8c8d;">шт.</span>
                 </div>
                 <div style="flex: 1; text-align: right; min-width: 100px;">
@@ -367,21 +349,16 @@ function buildCashRegister() {
             </div>
         `;
     });
-    
     html += '</div>';
     container.innerHTML = html;
     updateCashRegister();
 }
 
 function updateCashRegister() {
-    let totalQty = 0;
-    let totalRevenue = 0;
-    let totalCost = 0;
-    
+    let totalQty = 0, totalRevenue = 0, totalCost = 0;
     DISH_DATABASE.forEach((dish, idx) => {
         const qtyEl = document.getElementById(`cash_qty_${idx}`);
         if (!qtyEl) return;
-        
         const qty = parseInt(qtyEl.value) || 0;
         const price = lastCalculatedPrices[idx] || 0;
         const cost = lastCalculatedCosts[idx] || 0;
@@ -390,40 +367,46 @@ function updateCashRegister() {
         const lineEl = document.getElementById(`cash_line_${idx}`);
         if (lineEl) lineEl.innerText = '$' + lineTotal.toLocaleString();
         
-        // Сохраняем в localStorage
         localStorage.setItem(`cash_qty_${idx}`, qty);
-        
         totalQty += qty;
         totalRevenue += lineTotal;
         totalCost += qty * cost;
     });
     
-    const profit = totalRevenue - totalCost;
-    
     document.getElementById("cash_total_qty").innerText = totalQty;
     document.getElementById("cash_total_revenue").innerText = '$' + totalRevenue.toLocaleString();
     document.getElementById("cash_total_cost").innerText = '$' + totalCost.toLocaleString();
-    document.getElementById("cash_total_profit").innerText = '$' + profit.toLocaleString();
+    document.getElementById("cash_total_profit").innerText = '$' + (totalRevenue - totalCost).toLocaleString();
+}
+
+function openCashRegister() {
+    if (Object.keys(lastCalculatedPrices).length === 0) {
+        calculateLogisticsCore();
+    }
+    const cashBlock = document.getElementById("cash_register_block");
+    const resultBox = document.getElementById("result_box");
+    if (cashBlock) {
+        cashBlock.style.display = "block";
+        if (resultBox) resultBox.style.display = "block";
+        buildCashRegister();
+        cashBlock.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
 }
 
 function finishShift() {
     const totalQty = parseInt(document.getElementById("cash_total_qty").innerText) || 0;
-    const totalRevenue = parseInt(document.getElementById("cash_total_revenue").innerText.replace(/\D/g, '')) || 0;
-    const totalCost = parseInt(document.getElementById("cash_total_cost").innerText.replace(/\D/g, '')) || 0;
-    const profit = totalRevenue - totalCost;
-    
     if (totalQty === 0) {
         alert("Вы не продали ни одной порции! Проверьте данные.");
         return;
     }
     
-    // Формируем отчёт
+    const totalRevenue = parseInt(document.getElementById("cash_total_revenue").innerText.replace(/\D/g, '')) || 0;
+    const totalCost = parseInt(document.getElementById("cash_total_cost").innerText.replace(/\D/g, '')) || 0;
+    
     const shiftData = {
         date: new Date().toLocaleString("ru-RU"),
-        totalQty,
-        totalRevenue,
-        totalCost,
-        profit,
+        totalQty, totalRevenue, totalCost,
+        profit: totalRevenue - totalCost,
         dishes: []
     };
     
@@ -431,70 +414,40 @@ function finishShift() {
         const qty = parseInt(localStorage.getItem(`cash_qty_${idx}`)) || 0;
         if (qty > 0) {
             shiftData.dishes.push({
-                name: dish.name,
-                qty,
+                name: dish.name, qty,
                 price: lastCalculatedPrices[idx] || 0,
                 total: qty * (lastCalculatedPrices[idx] || 0)
             });
         }
     });
     
-    // Сохраняем последнюю смену
     localStorage.setItem("last_shift", JSON.stringify(shiftData));
     
-    // Показываем отчёт
-    const reportBlock = document.getElementById("shift_report_block");
-    const reportContent = document.getElementById("shift_report_content");
-    
-    let html = `
-        <div style="margin-bottom: 15px;">
-            <div style="font-size: 14px; opacity: 0.9;">📅 Дата: ${shiftData.date}</div>
-        </div>
-        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span>Продано порций:</span>
-                <strong>${shiftData.totalQty}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span>Выручка:</span>
-                <strong>$${shiftData.totalRevenue.toLocaleString()}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span>Себестоимость:</span>
-                <strong>$${shiftData.totalCost.toLocaleString()}</strong>
-            </div>
-            <hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">
-            <div style="display: flex; justify-content: space-between; font-size: 20px;">
-                <span>💰 Прибыль:</span>
-                <strong>$${shiftData.profit.toLocaleString()}</strong>
-            </div>
-        </div>
-        <div style="font-size: 14px; margin-bottom: 10px;"><strong>Детализация по блюдам:</strong></div>
-    `;
+    let html = `<div style="margin-bottom: 15px;"><div style="font-size: 14px; opacity: 0.9;">📅 Дата: ${shiftData.date}</div></div>`;
+    html += `<div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 6px; margin-bottom: 15px;">`;
+    html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Продано порций:</span><strong>${shiftData.totalQty}</strong></div>`;
+    html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Выручка:</span><strong>$${shiftData.totalRevenue.toLocaleString()}</strong></div>`;
+    html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Себестоимость:</span><strong>$${shiftData.totalCost.toLocaleString()}</strong></div>`;
+    html += `<hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">`;
+    html += `<div style="display: flex; justify-content: space-between; font-size: 20px;"><span>💰 Прибыль:</span><strong>$${shiftData.profit.toLocaleString()}</strong></div></div>`;
+    html += `<div style="font-size: 14px; margin-bottom: 10px;"><strong>Детализация по блюдам:</strong></div>`;
     
     shiftData.dishes.forEach(d => {
-        html += `
-            <div style="display: flex; justify-content: space-between; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 5px; font-size: 14px;">
-                <span>${d.name} × ${d.qty}</span>
-                <strong>$${d.total.toLocaleString()}</strong>
-            </div>
-        `;
+        html += `<div style="display: flex; justify-content: space-between; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 5px; font-size: 14px;"><span>${d.name} × ${d.qty}</span><strong>$${d.total.toLocaleString()}</strong></div>`;
     });
     
-    reportContent.innerHTML = html;
-    reportBlock.style.display = "block";
-    reportBlock.scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("shift_report_content").innerHTML = html;
+    document.getElementById("shift_report_block").style.display = "block";
+    document.getElementById("shift_report_block").scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 function resetCashRegister() {
     if (!confirm("Обнулить все продажи в кассе?")) return;
-    
     DISH_DATABASE.forEach((dish, idx) => {
         localStorage.removeItem(`cash_qty_${idx}`);
         const el = document.getElementById(`cash_qty_${idx}`);
         if (el) el.value = 0;
     });
-    
     document.getElementById("shift_report_block").style.display = "none";
     updateCashRegister();
 }
@@ -506,21 +459,19 @@ function exportShiftReport() {
         return;
     }
     
-    let text = ` ОТЧЁТ ПО СМЕНЕ\n`;
+    let text = `📊 ОТЧЁТ ПО СМЕНЕ\n`;
     text += `📅 Дата: ${shiftData.date}\n`;
     text += `━━━━━━━━━━━━━━━━━━━━\n`;
     text += `Продано порций: ${shiftData.totalQty}\n`;
     text += `Выручка: $${shiftData.totalRevenue.toLocaleString()}\n`;
     text += `Себестоимость: $${shiftData.totalCost.toLocaleString()}\n`;
     text += `💰 ПРИБЫЛЬ: $${shiftData.profit.toLocaleString()}\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `Детализация:\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━\nДетализация:\n`;
     
     shiftData.dishes.forEach(d => {
         text += `• ${d.name} × ${d.qty} = $${d.total.toLocaleString()}\n`;
     });
     
-    // Показываем в модальном окне
     const modal = document.getElementById("sync_modal");
     document.getElementById("sync_modal_title").innerText = "📤 Отчёт по смене";
     document.getElementById("sync_modal_content").innerHTML = `
