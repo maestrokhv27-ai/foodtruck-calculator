@@ -77,27 +77,29 @@ function switchBusinessLogic() {
     const carLimit = document.getElementById("group_car_limit");
     const rvStorage = document.getElementById("group_rv_storage");
     const rvCabinet = document.getElementById("group_rv_cabinet");
-    
-    const thRaw1 = document.getElementById("th_raw_stock_name");
-    const thRaw2 = document.getElementById("th_raw_stock_name_2");
-    const b3Title = document.getElementById("title_block3");
-    const b4Title = document.getElementById("title_block4");
+
+    // Сброс всех
+    if(trkLimit) trkLimit.style.display = "none";
+    if(carLimit) carLimit.style.display = "none";
+    if(rvStorage) rvStorage.style.display = "none";
+    if(rvCabinet) rvCabinet.style.display = "none";
 
     if (logic === "1") {
         if(trkLimit) trkLimit.style.display = "flex";
-        if(carLimit) carLimit.style.display = "none";
-        if(rvStorage) rvStorage.style.display = "none";
-        if(rvCabinet) rvCabinet.style.display = "none";
     } 
     else if (logic === "2") {
         if(trkLimit) trkLimit.style.display = "flex";
         if(carLimit) carLimit.style.display = "flex";
-        if(rvStorage) rvStorage.style.display = "none";
-        if(rvCabinet) rvCabinet.style.display = "none";
     } 
     else if (logic === "3") {
         if(trkLimit) trkLimit.style.display = "flex";
         if(carLimit) carLimit.style.display = "flex";
+        if(rvStorage) rvStorage.style.display = "flex";
+        if(rvCabinet) rvCabinet.style.display = "flex";
+    }
+    else if (logic === "4") {
+        // Режим 4: автодом = транспорт + хранилище
+        if(trkLimit) trkLimit.style.display = "flex";
         if(rvStorage) rvStorage.style.display = "flex";
         if(rvCabinet) rvCabinet.style.display = "flex";
     }
