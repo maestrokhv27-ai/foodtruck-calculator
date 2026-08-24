@@ -1,4 +1,5 @@
-// ==================== CORE.JS: ЧАСТЬ 1 ИЗ 2 ====================
+// ==================== CORE.JS ====================
+
 // Объединяем три части меню в единую базу данных
 const DISH_DATABASE = [...DISH_DATABASE_P1, ...DISH_DATABASE_P2, ...DISH_DATABASE_P3];
 
@@ -8,7 +9,7 @@ window.onload = function() {
     loadFromLocalStorage(); // Автозагрузка остатков с ПК
 };
 
-// Исправленная сборка: сохраняет галочку в память СРАЗУ при клике на неё
+// Сборка меню: сохраняет галочку в память СРАЗУ при клике на неё
 function initMenuCheckboxes() {
     const container = document.getElementById("menu_checkboxes");
     if (!container) return;
@@ -86,7 +87,7 @@ function switchBusinessLogic() {
     }
     rebuildReadyStockTable();
 }
-// ==================== CORE.JS: ЧАСТЬ 2 ИЗ 2 ====================
+
 function rebuildReadyStockTable() {
     const logic = document.getElementById("business_logic").value;
     let requiredComponents = new Set();
@@ -150,7 +151,7 @@ function saveToLocalStorage() {
     rawIds.forEach(id => { if(document.getElementById(`stock_${id}`)) localStorage.setItem(`stock_${id}`, document.getElementById(`stock_${id}`).value); });
     
     document.querySelectorAll(".ready-input").forEach(el => { localStorage.setItem(el.id, el.value); });
-    alert("💾 Данные переучета успешно сохранены на ПК!");
+    alert("💾 Данные переучета успешно сохранены!");
 }
 
 function loadFromLocalStorage() {
@@ -183,97 +184,11 @@ function resetAllFields() {
         rawIds.forEach(id => { if(document.getElementById(`stock_${id}`)) document.getElementById(`stock_${id}`).value = 0; });
         DISH_DATABASE.forEach((dish, idx) => { if(document.getElementById(`dish_${idx}`)) document.getElementById(`dish_${idx}`).checked = false; });
         rebuildReadyStockTable();
+        // Также обнуляем кассу при полном сбросе
+        if (typeof resetCashRegister === 'function') resetCashRegister();
     }
-} // <--- ВОТ ЭТОЙ СКОБКИ НЕ ХВАТАЛО! ТЕПЕРЬ ВСЁ РАБОТАЕТ
-
-// ==================== ПОКАЗ ПОЛНОЙ ЦЕПОЧКИ ПРИГОТОВЛЕНИЯ ====================
-function showFullRecipeChain() {
-    const selectedDishes = [];
-    DISH_DATABASE.forEach((dish, idx) => {
-        if (document.getElementById(`dish_${idx}`) && document.getElementById(`dish_${idx}`).checked) {
-            selectedDishes.push(dish);
-        }
-    });
-
-    if (selectedDishes.length === 0) {
-        alert("Выберите хотя бы одно блюдо из меню!");
-        return;
-    }
-
-    const box = document.getElementById("recipe_chain_box");
-    const content = document.getElementById("recipe_chain_content");
-    
-    let html = "";
-    
-    selectedDishes.forEach(dish => {
-        html += `<div style="background: white; border-left: 4px solid #27ae60; padding: 15px; margin-bottom: 15px; border-radius: 4px;">`;
-        html += `<h4 style="margin: 0 0 10px 0; color: #2c3e50;">${dish.name}</h4>`;
-        html += `<div style="font-size: 13px; color: #7f8c8d; margin-bottom: 10px;">${dish.craft}</div>`;
-        html += `<div style="margin-left: 15px;">`;
-        html += `<strong>🧪 Необходимые компоненты:</strong><ul style="margin: 5px 0; padding-left: 20px;">`;
-        
-        for (let component in dish.recipe) {
-            const qty = dish.recipe[component];
-            const compName = COMPONENT_NAMES[component] || component;
-            html += `<li><strong>${compName}</strong> — ${qty} шт.`;
-            html += showComponentChain(component, qty, 1);
-            html += `</li>`;
-        }
-        
-        html += `</ul></div>`;
-        html += `</div>`;
-    });
-    
-    content.innerHTML = html;
-    box.style.display = "block";
-    box.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
-function showComponentChain(component, qty, level) {
-    let html = "";
-    const indent = "  ".repeat(level);
-    
-    const recipes = {
-        "овощи_заг": { "овощи": 1 },
-        "вареный_рис": { "рис": 1 },
-        "картофельное_пюре": { "овощи": 1, "молоко": 2 },
-        "мясной_фарш": { "мясо": 1 },
-        "рыбный_фарш": { "рыба": 1 },
-        "хлеб": { "мука": 1, "яйцо": 1 },
-        "макароны": { "мука": 1, "яйцо": 1 },
-        "сыр": { "молоко": 1 },
-        "котлета": { "мясо": 1, "масло": 1 },
-        "рыбная_котлета": { "рыба": 1, "масло": 1 },
-        "стейк_заг": { "мясо": 1, "фрукты": 1, "сахар": 1 },
-        "рыба_фрукт_заг": { "рыба": 1, "фрукты": 1, "сахар": 1 },
-        "масло": { "молоко": 1 }
-    };
-    
-    const baseIngredients = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба"];
-    const subComponents = recipes[component] || {};
-    
-    if (subComponents && Object.keys(subComponents).length > 0) {
-        html += `<ul style="margin: 5px 0; padding-left: 20px; color: #34495e;">`;
-        for (let subComp in subComponents) {
-            const subQty = subComponents[subComp] * qty;
-            const subName = COMPONENT_NAMES[subComp] || subComp;
-            
-            if (baseIngredients.includes(subComp)) {
-                html += `<li>${indent}↳ <strong>${subName}</strong> — ${subQty} шт. <span style="color: #27ae60;">(базовый ингредиент)</span></li>`;
-            } else {
-                html += `<li>${indent}↳ <strong>${subName}</strong> — ${subQty} шт.`;
-                html += showComponentChain(subComp, subQty, level + 1);
-                html += `</li>`;
-            }
-        }
-        html += `</ul>`;
-    } else {
-        const compName = COMPONENT_NAMES[component] || component;
-        html += ` <span style="color: #27ae60;">(базовый ингредиент)</span>`;
-    }
-    
-    return html;
-}
 // ==================== ТЁМНАЯ ТЕМА ====================
 function toggleTheme() {
     document.body.classList.toggle("dark-theme");
@@ -287,13 +202,13 @@ function toggleTheme() {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark") {
         document.body.classList.add("dark-theme");
-        // Кнопка обновится после загрузки страницы
         setTimeout(() => {
             const btn = document.getElementById("theme_btn");
             if (btn) btn.innerText = "☀️ Светлая тема";
         }, 100);
     }
 })();
+
 // ==================== ЭКСПОРТ / ИМПОРТ ДАННЫХ ====================
 function exportData() {
     const data = {};
@@ -330,7 +245,7 @@ function exportData() {
         <p style="color: #7f8c8d; font-size: 14px;">Скопируйте этот код и отправьте себе в Telegram (в "Избранное"):</p>
         <textarea id="export_code" readonly style="width: 100%; height: 150px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: monospace; font-size: 12px; resize: vertical;">${encoded}</textarea>
         <div style="margin-top: 10px; text-align: center;">
-            <button onclick="copyExportCode()" style="background: #27ae60; color: white; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; font-weight: bold;"> Скопировать код</button>
+            <button onclick="copyExportCode()" style="background: #27ae60; color: white; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; font-weight: bold;">📋 Скопировать код</button>
         </div>
         <p id="copy_status" style="color: #27ae60; font-size: 13px; margin-top: 10px; display: none;">✅ Скопировано!</p>
     `;
@@ -376,9 +291,7 @@ function applyImport() {
         const json = decodeURIComponent(escape(atob(code)));
         const data = JSON.parse(json);
         
-        // Применяем настройки
-        const configs = ["business_logic", "cfg_truck_fridge", "cfg_car_trunk", 
-                         "cfg_rv_storage", "cfg_rv_cabinet", "cfg_margin_percent", "cfg_fish_price"];
+        const configs = ["business_logic", "cfg_truck_fridge", "cfg_car_trunk", "cfg_rv_storage", "cfg_rv_cabinet", "cfg_margin_percent", "cfg_fish_price"];
         configs.forEach(id => {
             if (data[id] !== undefined) {
                 localStorage.setItem(id, data[id]);
@@ -387,7 +300,6 @@ function applyImport() {
             }
         });
 
-        // Применяем блюда
         DISH_DATABASE.forEach((dish, idx) => {
             if (data[`dish_${idx}`] !== undefined) {
                 localStorage.setItem(`dish_${idx}`, data[`dish_${idx}`]);
@@ -396,7 +308,6 @@ function applyImport() {
             }
         });
 
-        // Применяем сырьё
         const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба"];
         rawIds.forEach(id => {
             if (data[`stock_${id}`] !== undefined) {
@@ -406,7 +317,6 @@ function applyImport() {
             }
         });
 
-        // Применяем заготовки
         for (let key in data) {
             if (key.startsWith("ready_")) {
                 localStorage.setItem(key, data[key]);
@@ -415,11 +325,10 @@ function applyImport() {
             }
         }
 
-        // Обновляем интерфейс
         switchBusinessLogic();
         rebuildReadyStockTable();
 
-        status.innerText = "✅ Данные успешно импортированы! Страница обновлена.";
+        status.innerText = "✅ Данные успешно импортированы!";
         status.style.color = "#27ae60";
         status.style.display = "block";
         
