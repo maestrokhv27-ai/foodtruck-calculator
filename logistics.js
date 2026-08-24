@@ -1,8 +1,10 @@
-// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ КАССЫ ====================
+// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
 let lastCalculatedPrices = {};
 let lastCalculatedCosts = {};
+let currentOrder = {};
+let shiftStats = { revenue: 0, profit: 0, orders: 0 };
 
-// ==================== ОСНОВНОЙ РАСЧЁТ ЛОГИСТИКИ ====================
+// ==================== ОСНОВНОЙ РАСЧЁТ ====================
 function calculateLogisticsCore() {
     const l = document.getElementById("business_logic").value;
     const t = parseFloat(document.getElementById("cfg_truck_fridge").value) || 100;
@@ -84,7 +86,6 @@ function calculateLogisticsCore() {
         cog += g * cp;
         rev += g * sp;
         
-        // ИСПРАВЛЕНО: получаем правильный индекс из общей базы
         const originalIdx = DISH_DATABASE.indexOf(dish);
         lastCalculatedPrices[originalIdx] = sp;
         lastCalculatedCosts[originalIdx] = cp;
@@ -145,9 +146,10 @@ function calculateLogisticsCore() {
 
     document.getElementById("error_box").style.display = "none";
     document.getElementById("result_box").style.display = "block";
+    document.getElementById("no_calc_msg").style.display = "none";
 
     let inf = `<p>Выбранных позиций: <strong>${s.length}</strong>. На позицию: <strong>${g} порц.</strong> (заготовок на порцию: ${totalComponentsPerServing})</p>`;
-    inf += `<p>🏪 Бюджет на оптовую базу: <b>$${bc.toLocaleString()}</b> | 🎣 Наличка на скупку рыбы: <b style="color:#e67e22;">$${fc.toLocaleString()}</b></p>`;
+    inf += `<p>🏪 Бюджет на оптовую базу: <b>$${bc.toLocaleString()}</b> |  Наличка на скупку рыбы: <b style="color:#e67e22;">$${fc.toLocaleString()}</b></p>`;
     inf += `<p><strong>🔥 ОБЩИЙ РАСХОД:</strong> <span style="color:#2980b9;font-weight:bold;">$${(bc + fc).toLocaleString()}</span></p>${hasDef ? htmlShop : "<p>✅ ЗАПАСОВ СЫРЬЯ ХВАТАЕТ!</p>"}`;
     
     document.getElementById("res_shopping_list").innerHTML = inf;
@@ -207,11 +209,13 @@ function calculateLogisticsCore() {
     let eHtml = `${htmlPrices}<hr><p>Полный себес: <strong>$${cog.toLocaleString()}</strong> | Выручка: <strong>$${rev.toLocaleString()}</strong></p><p style="font-size:16px;">💰 <b>Чистая прибыль:</b> <span style="color:#27ae60;font-weight:bold;">$${prof.toLocaleString()}</span></p>`;
     document.getElementById("res_economy_block").innerHTML = eHtml;
 
-    // ИСПРАВЛЕНО: вызываем построение кассы один раз в самом конце
-    buildCashRegister();
+    initPOS();
+    
+    const procurementBtn = document.querySelector('.tab-btn[onclick*="tab-procurement"]');
+    if(procurementBtn) openTab('tab-procurement', procurementBtn);
 }
 
-// ==================== ПОКАЗ ПОЛНОЙ ЦЕПОЧКИ ПРИГОТОВЛЕНИЯ ====================
+// ==================== ЦЕПОЧКА ПРИГОТОВЛЕНИЯ ====================
 function showFullRecipeChain() {
     const selectedDishes = [];
     DISH_DATABASE.forEach((dish, idx) => {
@@ -230,8 +234,8 @@ function showFullRecipeChain() {
     let html = "";
     
     selectedDishes.forEach((dish) => {
-        html += `<div style="background: white; border-top: 4px solid #27ae60; border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 15px; border-radius: 4px;">`;
-        html += `<h4 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 18px;">${dish.name}</h4>`;
+        html += `<div class="recipe-card">`;
+        html += `<h4>${dish.name}</h4>`;
         html += `<div style="font-size: 13px; color: #7f8c8d; margin-bottom: 15px; font-style: italic;">${dish.craft}</div>`;
         html += `<div style="margin-left: 10px;">`;
         html += `<strong style="color: #27ae60;">🧪 Необходимые компоненты:</strong>`;
@@ -251,6 +255,7 @@ function showFullRecipeChain() {
     
     content.innerHTML = html;
     box.style.display = "block";
+    document.getElementById("no_recipe_msg").style.display = "none";
     box.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
@@ -279,10 +284,8 @@ function showComponentChain(component, qty, level, parentIndex) {
     
     if (Object.keys(subComponents).length > 0) {
         html += `<ol style="margin: 5px 0 5px 20px; padding-left: 20px; line-height: 1.7;">`;
-        let subIndex = 0;
         for (let subComp in subComponents) {
             if (subComp === "инструменты") continue;
-            subIndex++;
             const subQty = subComponents[subComp] * qty;
             const subName = COMPONENT_NAMES[subComp] || subComp;
             
@@ -290,13 +293,13 @@ function showComponentChain(component, qty, level, parentIndex) {
                 html += `<li><strong>${subName}</strong> — ${subQty} шт. <span style="color: #27ae60;">(базовый ингредиент)</span></li>`;
             } else {
                 html += `<li><strong>${subName}</strong> — ${subQty} шт.`;
-                html += showComponentChain(subComp, subQty, level + 1, subIndex);
+                html += showComponentChain(subComp, subQty, level + 1);
                 html += `</li>`;
             }
         }
         
         if (subComponents.инструменты) {
-            const toolIcons = { "нож": "🔪", "венчик": "🥄", "огонь": "🔥" };
+            const toolIcons = { "нож": "", "венчик": "🥄", "огонь": "🔥" };
             const toolsHtml = subComponents.инструменты.map(t => {
                 const icon = toolIcons[t.toLowerCase()] || '🔧';
                 return `<span style="display: inline-flex; align-items: center; margin: 2px 5px; padding: 3px 8px; background: #fff3cd; border-radius: 4px; font-size: 14px;">${icon} ${t}</span>`;
@@ -308,174 +311,205 @@ function showComponentChain(component, qty, level, parentIndex) {
     return html;
 }
 
-// ==================== КАССОВЫЙ АППАРАТ ====================
-function buildCashRegister() {
-    const container = document.getElementById("cash_register_table");
-    if (!container) return;
-    
+// ==================== POS-ТЕРМИНАЛ ====================
+function initPOS() {
+    const savedShift = localStorage.getItem("shift_stats");
+    if (savedShift) shiftStats = JSON.parse(savedShift);
+    updateShiftDisplay();
+
+    const grid = document.getElementById("pos_menu_grid");
+    if (!grid) return;
+    grid.innerHTML = "";
+
     const selectedDishes = [];
     DISH_DATABASE.forEach((dish, idx) => {
         if (document.getElementById(`dish_${idx}`) && document.getElementById(`dish_${idx}`).checked) {
             selectedDishes.push({ dish, idx });
         }
     });
-    
+
     if (selectedDishes.length === 0) {
-        container.innerHTML = '<p style="color: #95a5a6;">Сначала выберите блюда в меню и нажмите "Рассчитать смену"</p>';
+        grid.innerHTML = '<p style="grid-column: 1/-1; color: #7f8c8d; text-align: center;">Выберите блюда во вкладке "Настройки" и нажмите "Рассчитать смену"</p>';
         return;
     }
-    
-    let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+
     selectedDishes.forEach(({ dish, idx }) => {
-        const price = lastCalculatedPrices[idx] || 0;
-        const cost = lastCalculatedCosts[idx] || 0;
-        const savedQty = localStorage.getItem(`cash_qty_${idx}`) || 0;
-        
-        html += `
-            <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: white; border-radius: 6px; border: 1px solid #e0e0e0; flex-wrap: wrap;">
-                <div style="flex: 2; min-width: 150px;">
-                    <strong>${dish.name}</strong>
-                    <div style="font-size: 12px; color: #7f8c8d;">Цена: $${price} | Себес: $${cost}</div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <label style="font-size: 13px;">Продано:</label>
-                    <input type="number" id="cash_qty_${idx}" value="${savedQty}" min="0" 
-                           oninput="updateCashRegister()" style="width: 70px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-size: 16px; font-weight: bold;">
-                    <span style="font-size: 13px; color: #7f8c8d;">шт.</span>
-                </div>
-                <div style="flex: 1; text-align: right; min-width: 100px;">
-                    <div style="font-size: 16px; font-weight: bold; color: #27ae60;" id="cash_line_${idx}">$${(savedQty * price).toLocaleString()}</div>
-                </div>
+        const price = lastCalculatedPrices[idx] || dish.price;
+        const btn = document.createElement("div");
+        btn.className = "pos-item";
+        btn.innerHTML = `
+            <div style="font-size: 13px; font-weight: bold; text-align: center; line-height: 1.2;">${dish.name}</div>
+            <div style="font-size: 12px; color: #27ae60; font-weight: bold;">$${price}</div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                <button onclick="addToOrder(${idx}, -1)" style="background: #e74c3c; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; font-size: 16px;">-</button>
+                <span id="pos_qty_${idx}" style="font-weight: bold; font-size: 16px; min-width: 20px; text-align: center;">${currentOrder[idx] || 0}</span>
+                <button onclick="addToOrder(${idx}, 1)" style="background: #27ae60; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; font-size: 16px;">+</button>
             </div>
         `;
-    });
-    html += '</div>';
-    container.innerHTML = html;
-    updateCashRegister();
-}
-
-function updateCashRegister() {
-    let totalQty = 0, totalRevenue = 0, totalCost = 0;
-    DISH_DATABASE.forEach((dish, idx) => {
-        const qtyEl = document.getElementById(`cash_qty_${idx}`);
-        if (!qtyEl) return;
-        const qty = parseInt(qtyEl.value) || 0;
-        const price = lastCalculatedPrices[idx] || 0;
-        const cost = lastCalculatedCosts[idx] || 0;
-        const lineTotal = qty * price;
-        
-        const lineEl = document.getElementById(`cash_line_${idx}`);
-        if (lineEl) lineEl.innerText = '$' + lineTotal.toLocaleString();
-        
-        localStorage.setItem(`cash_qty_${idx}`, qty);
-        totalQty += qty;
-        totalRevenue += lineTotal;
-        totalCost += qty * cost;
+        grid.appendChild(btn);
     });
     
-    document.getElementById("cash_total_qty").innerText = totalQty;
-    document.getElementById("cash_total_revenue").innerText = '$' + totalRevenue.toLocaleString();
-    document.getElementById("cash_total_cost").innerText = '$' + totalCost.toLocaleString();
-    document.getElementById("cash_total_profit").innerText = '$' + (totalRevenue - totalCost).toLocaleString();
+    renderActiveOrder();
 }
 
-function openCashRegister() {
-    if (Object.keys(lastCalculatedPrices).length === 0) {
-        calculateLogisticsCore();
-    }
-    const cashBlock = document.getElementById("cash_register_block");
-    const resultBox = document.getElementById("result_box");
-    if (cashBlock) {
-        cashBlock.style.display = "block";
-        if (resultBox) resultBox.style.display = "block";
-        buildCashRegister();
-        cashBlock.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
+function addToOrder(idx, change) {
+    if (!currentOrder[idx]) currentOrder[idx] = 0;
+    currentOrder[idx] += change;
+    if (currentOrder[idx] <= 0) delete currentOrder[idx];
+    
+    const qtyEl = document.getElementById(`pos_qty_${idx}`);
+    if (qtyEl) qtyEl.innerText = currentOrder[idx] || 0;
+    
+    renderActiveOrder();
 }
 
-function finishShift() {
-    const totalQty = parseInt(document.getElementById("cash_total_qty").innerText) || 0;
-    if (totalQty === 0) {
-        alert("Вы не продали ни одной порции! Проверьте данные.");
+function renderActiveOrder() {
+    const block = document.getElementById("pos_active_order_block");
+    const itemsDiv = document.getElementById("pos_current_items");
+    const ticketDiv = document.getElementById("pos_kitchen_ticket");
+    const totalEl = document.getElementById("pos_current_total");
+    
+    const indices = Object.keys(currentOrder);
+    if (indices.length === 0) {
+        block.style.display = "none";
         return;
     }
     
-    const totalRevenue = parseInt(document.getElementById("cash_total_revenue").innerText.replace(/\D/g, '')) || 0;
-    const totalCost = parseInt(document.getElementById("cash_total_cost").innerText.replace(/\D/g, '')) || 0;
-    
-    const shiftData = {
-        date: new Date().toLocaleString("ru-RU"),
-        totalQty, totalRevenue, totalCost,
-        profit: totalRevenue - totalCost,
-        dishes: []
-    };
-    
-    DISH_DATABASE.forEach((dish, idx) => {
-        const qty = parseInt(localStorage.getItem(`cash_qty_${idx}`)) || 0;
-        if (qty > 0) {
-            shiftData.dishes.push({
-                name: dish.name, qty,
-                price: lastCalculatedPrices[idx] || 0,
-                total: qty * (lastCalculatedPrices[idx] || 0)
-            });
+    block.style.display = "block";
+    let itemsHtml = "";
+    let kitchenNeeds = {};
+    let currentTotal = 0;
+
+    indices.forEach(idxStr => {
+        const idx = parseInt(idxStr);
+        const qty = currentOrder[idx];
+        const dish = DISH_DATABASE[idx];
+        const price = lastCalculatedPrices[idx] || dish.price;
+        
+        itemsHtml += `<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span>${dish.name} x${qty}</span>
+            <strong>$${(price * qty).toLocaleString()}</strong>
+        </div>`;
+        
+        currentTotal += price * qty;
+
+        for (let comp in dish.recipe) {
+            const compQty = dish.recipe[comp] * qty;
+            kitchenNeeds[comp] = (kitchenNeeds[comp] || 0) + compQty;
         }
     });
-    
-    localStorage.setItem("last_shift", JSON.stringify(shiftData));
-    
-    let html = `<div style="margin-bottom: 15px;"><div style="font-size: 14px; opacity: 0.9;">📅 Дата: ${shiftData.date}</div></div>`;
-    html += `<div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 6px; margin-bottom: 15px;">`;
-    html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Продано порций:</span><strong>${shiftData.totalQty}</strong></div>`;
-    html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Выручка:</span><strong>$${shiftData.totalRevenue.toLocaleString()}</strong></div>`;
-    html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Себестоимость:</span><strong>$${shiftData.totalCost.toLocaleString()}</strong></div>`;
-    html += `<hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">`;
-    html += `<div style="display: flex; justify-content: space-between; font-size: 20px;"><span>💰 Прибыль:</span><strong>$${shiftData.profit.toLocaleString()}</strong></div></div>`;
-    html += `<div style="font-size: 14px; margin-bottom: 10px;"><strong>Детализация по блюдам:</strong></div>`;
-    
-    shiftData.dishes.forEach(d => {
-        html += `<div style="display: flex; justify-content: space-between; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 5px; font-size: 14px;"><span>${d.name} × ${d.qty}</span><strong>$${d.total.toLocaleString()}</strong></div>`;
-    });
-    
-    document.getElementById("shift_report_content").innerHTML = html;
-    document.getElementById("shift_report_block").style.display = "block";
-    document.getElementById("shift_report_block").scrollIntoView({ behavior: "smooth", block: "center" });
+
+    itemsDiv.innerHTML = itemsHtml;
+    totalEl.innerText = "$" + currentTotal.toLocaleString();
+
+    let ticketHtml = "";
+    for (let comp in kitchenNeeds) {
+        const name = COMPONENT_NAMES[comp] || comp;
+        ticketHtml += `<div>• ${name}: <strong>${kitchenNeeds[comp]} шт.</strong></div>`;
+    }
+    ticketDiv.innerHTML = ticketHtml || "Нет компонентов";
 }
 
-function resetCashRegister() {
-    if (!confirm("Обнулить все продажи в кассе?")) return;
-    DISH_DATABASE.forEach((dish, idx) => {
-        localStorage.removeItem(`cash_qty_${idx}`);
-        const el = document.getElementById(`cash_qty_${idx}`);
-        if (el) el.value = 0;
+function completeCurrentOrder() {
+    const indices = Object.keys(currentOrder);
+    if (indices.length === 0) return;
+
+    let orderRevenue = 0;
+    let orderCost = 0;
+
+    indices.forEach(idxStr => {
+        const idx = parseInt(idxStr);
+        const qty = currentOrder[idx];
+        const price = lastCalculatedPrices[idx] || DISH_DATABASE[idx].price;
+        const cost = lastCalculatedCosts[idx] || 0;
+        
+        orderRevenue += price * qty;
+        orderCost += cost * qty;
     });
-    document.getElementById("shift_report_block").style.display = "none";
-    updateCashRegister();
+
+    shiftStats.revenue += orderRevenue;
+    shiftStats.profit += (orderRevenue - orderCost);
+    shiftStats.orders += 1;
+    
+    localStorage.setItem("shift_stats", JSON.stringify(shiftStats));
+    updateShiftDisplay();
+    updateShiftReport();
+
+    currentOrder = {};
+    DISH_DATABASE.forEach((dish, idx) => {
+        const qtyEl = document.getElementById(`pos_qty_${idx}`);
+        if (qtyEl) qtyEl.innerText = "0";
+    });
+    
+    renderActiveOrder();
+    
+    const btn = event.target;
+    const originalText = btn.innerText;
+    btn.innerText = "✅ ЗАКАЗ ПРОВЕДЕН!";
+    btn.style.background = "#2ecc71";
+    setTimeout(() => {
+        btn.innerText = originalText;
+        btn.style.background = "#27ae60";
+    }, 1000);
+}
+
+function updateShiftDisplay() {
+    const revEl = document.getElementById("pos_shift_revenue");
+    const profEl = document.getElementById("pos_shift_profit");
+    const ordEl = document.getElementById("pos_shift_orders");
+    
+    if (revEl) revEl.innerText = "$" + shiftStats.revenue.toLocaleString();
+    if (profEl) profEl.innerText = "$" + shiftStats.profit.toLocaleString();
+    if (ordEl) ordEl.innerText = shiftStats.orders;
+}
+
+function updateShiftReport() {
+    const reportContent = document.getElementById("shift_report_content");
+    if (!reportContent) return;
+    
+    let html = `<div style="margin-bottom: 15px;"><div style="font-size: 14px; opacity: 0.9;">📅 Смена активна</div></div>`;
+    html += `<div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 6px; margin-bottom: 15px;">`;
+    html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Продано заказов:</span><strong>${shiftStats.orders}</strong></div>`;
+    html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Выручка:</span><strong>$${shiftStats.revenue.toLocaleString()}</strong></div>`;
+    html += `<hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">`;
+    html += `<div style="display: flex; justify-content: space-between; font-size: 20px;"><span>💰 Прибыль:</span><strong>$${shiftStats.profit.toLocaleString()}</strong></div></div>`;
+    
+    reportContent.innerHTML = html;
+}
+
+function resetShiftData() {
+    if (!confirm("⚠️ Завершить смену и обнулить всю кассу?")) return;
+    shiftStats = { revenue: 0, profit: 0, orders: 0 };
+    currentOrder = {};
+    localStorage.setItem("shift_stats", JSON.stringify(shiftStats));
+    updateShiftDisplay();
+    initPOS();
+    
+    const reportContent = document.getElementById("shift_report_content");
+    if (reportContent) {
+        reportContent.innerHTML = '<p style="text-align: center; opacity: 0.8;">Проведите заказы в кассе, чтобы сформировать отчет.</p>';
+    }
 }
 
 function exportShiftReport() {
-    const shiftData = JSON.parse(localStorage.getItem("last_shift") || "{}");
-    if (!shiftData.date) {
-        alert("Нет данных о последней смене!");
+    if (shiftStats.orders === 0) {
+        alert("Нет данных о проведенных заказах!");
         return;
     }
     
+    const date = new Date().toLocaleString("ru-RU");
     let text = `📊 ОТЧЁТ ПО СМЕНЕ\n`;
-    text += `📅 Дата: ${shiftData.date}\n`;
+    text += `📅 Дата: ${date}\n`;
     text += `━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `Продано порций: ${shiftData.totalQty}\n`;
-    text += `Выручка: $${shiftData.totalRevenue.toLocaleString()}\n`;
-    text += `Себестоимость: $${shiftData.totalCost.toLocaleString()}\n`;
-    text += `💰 ПРИБЫЛЬ: $${shiftData.profit.toLocaleString()}\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━\nДетализация:\n`;
-    
-    shiftData.dishes.forEach(d => {
-        text += `• ${d.name} × ${d.qty} = $${d.total.toLocaleString()}\n`;
-    });
+    text += `Проведено заказов: ${shiftStats.orders}\n`;
+    text += `Выручка: $${shiftStats.revenue.toLocaleString()}\n`;
+    text += `💰 ПРИБЫЛЬ: $${shiftStats.profit.toLocaleString()}\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━\n`;
     
     const modal = document.getElementById("sync_modal");
     document.getElementById("sync_modal_title").innerText = "📤 Отчёт по смене";
     document.getElementById("sync_modal_content").innerHTML = `
-        <textarea id="export_code" readonly style="width: 100%; height: 250px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: monospace; font-size: 13px; resize: vertical;">${text}</textarea>
+        <textarea id="export_code" readonly style="width: 100%; height: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: monospace; font-size: 13px; resize: vertical;">${text}</textarea>
         <div style="margin-top: 10px; text-align: center;">
             <button onclick="copyExportCode()" style="background: #27ae60; color: white; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; font-weight: bold;">📋 Скопировать</button>
         </div>
