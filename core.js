@@ -345,3 +345,26 @@ function applyImport() {
 function closeSyncModal() {
     document.getElementById("sync_modal").style.display = "none";
 }
+// ==================== УПРАВЛЕНИЕ ВКЛАДКАМИ ====================
+function openTab(tabId, btnElement) {
+    // Скрываем все вкладки
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+        tab.style.display = 'none';
+    });
+    // Убираем активный класс у всех кнопок
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Показываем нужную вкладку и подсвечиваем кнопку
+    const activeTab = document.getElementById(tabId);
+    if (activeTab) {
+        activeTab.style.display = 'block';
+        // Небольшая задержка для срабатывания CSS анимации
+        setTimeout(() => activeTab.classList.add('active'), 10);
+    }
+    if (btnElement) {
+        btnElement.classList.add('active');
+    }
+}
