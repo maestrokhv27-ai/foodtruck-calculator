@@ -546,3 +546,374 @@ function exportShiftReport() {
         modal.style.display = "flex";
     }
 }
+// ==================== УЧЁТ ОСТАТКОВ В РЕАЛЬНОМ ВРЕМЕНИ ====================
+
+// Структура: { truck: {...}, rv_storage: {...}, rv_cabinet: {...} }
+function getStockData() {
+    const saved = localStorage.getItem("stock_data");
+    if (saved) return JSON.parse(saved);
+    return { truck: {}, rv_storage: {}, rv_cabinet: {} };
+}
+
+function saveStockData(data) {
+    localStorage.setItem("stock_data", JSON.stringify(data));
+}
+
+// Инициализация остатков из вкладки "Склад"
+function initStockFromInventory() {
+    const logic = document.getElementById("business_logic").value;
+    const stock = getStockData();
+    
+    // Базовое сырьё
+    const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба"];
+    rawIds.forEach(id => {
+        const el = document.getElementById(`stock_${id}`);
+        if (el) {
+            const val = parseInt(el.value) || 0;
+            if (logic === "1") {
+                stock.truck[id] = val;
+            } else if (logic === "2") {
+                stock.truck[id] = Math.floor(val / 2);
+                stock.rv_storage[id] = val - Math.floor(val / 2);
+            } else {
+                stock.truck[id] = Math.floor(val / 3);
+                stock.rv_storage[id] = Math.floor(val / 3);
+                stock.rv_cabinet[id] = val - Math.floor(val / 3) - Math.floor(val / 3);
+            }
+        }
+    });
+    
+    // Заготовки
+    document.querySelectorAll(".ready-input").forEach(el => {
+        const val = parseInt(el.value) || 0;
+        const id = el.id.replace("ready_", "").replace("_трак", "").replace("_авд", "");
+        if (el.id.includes("_трак")) {
+            stock.truck[id] = val;
+        } else if (el.id.includes("_авд")) {
+            stock.rv_storage[id] = val;
+        }
+    });
+    
+    saveStockData(stock);
+    return stock;
+}
+
+// Уменьшить остатки при продаже
+function consumeStock(order) {
+    const stock = getStockData();
+    const warnings = [];
+    const critical = [];
+    
+    for (let idxStr in order) {
+        const idx = parseInt(idxStr);
+        const qty = order[idxStr];
+        const dish = DISH_DATABASE[idx];
+        
+        for (let comp in dish.recipe) {
+            const needed = dish.recipe[comp] * qty;
+            if (!stock.truck[comp]) stock.truck[comp] = 0;
+            stock.truck[comp] -= needed;
+            
+            if (stock.truck[comp] < 0) stock.truck[comp] = 0;
+            
+            if (stock.truck[comp] === 0) {
+                critical.push(comp);
+            } else if (stock.truck[comp] <= 5) {
+                warnings.push(comp);
+            }
+        }
+    }
+    
+    saveStockData(stock);
+    return { warnings: [...new Set(warnings)], critical: [...new Set(critical)] };
+}
+
+// Проверить доступность блюда
+function isDishAvailable(dish) {
+    const stock = getStockData();
+    for (let comp in dish.recipe) {
+        const needed = dish.recipe[comp];
+        if (!stock.truck[comp] || stock.truck[comp] < needed) return false;
+    }
+    return true;
+}
+
+// Показать уведомления об остатках
+function showStockNotifications(result) {
+    if (result.warnings.length === 0 && result.critical.length === 0) return;
+    
+    let html = '<div style="background: #fff3cd; border-left: 4px solid #f39c12; padding: 12px; border-radius: 6px; margin-top: 15px;">';
+    html += '<strong style="color: #d35400;">️ Внимание к остаткам:</strong><ul style="margin: 8px 0 0 20px; padding: 0;">';
+    
+    result.critical.forEach(comp => {
+        const name = COMPONENT_NAMES[comp] || comp;
+        html += `<li style="color: #e74c3c; font-weight: bold;"> ${name} закончился! Блюда с ним недоступны.</li>`;
+    });
+    
+    result.warnings.forEach(comp => {
+        const name = COMPONENT_NAMES[comp] || comp;
+        const stock = getStockData();
+        html += `<li style="color: #e67e22;">⚠️ ${name}: осталось ${stock.truck[comp]} шт. Догрузите или приготовьте.</li>`;
+    });
+    
+    html += '</ul></div>';
+    
+    const posBlock = document.getElementById("cash_register_block");
+    if (posBlock) {
+        const existing = posBlock.querySelector(".stock-notifications");
+        if (existing) existing.remove();
+        const div = document.createElement("div");
+        div.className = "stock-notifications";
+        div.innerHTML = html;
+        posBlock.appendChild(div);
+    }
+}
+
+// Обновить POS-кнопки (заблокировать недоступные)
+function updatePOSAvailability() {
+    const stock = getStockData();
+    DISH_DATABASE.forEach((dish, idx) => {
+        const qtyEl = document.getElementById(`pos_qty_${idx}`);
+        const parentBtn = qtyEl ? qtyEl.closest('.pos-item') : null;
+        if (!parentBtn) return;
+        
+        const available = isDishAvailable(dish);
+        if (!available) {
+            parentBtn.style.opacity = "0.4";
+            parentBtn.style.pointerEvents = "none";
+            parentBtn.title = "Недостаточно компонентов";
+        } else {
+            parentBtn.style.opacity = "1";
+            parentBtn.style.pointerEvents = "auto";
+            parentBtn.title = "";
+        }
+    });
+}
+
+// Догрузить из хранилища
+function restockFromStorage(component, qty, from) {
+    const stock = getStockData();
+    const source = from === "storage" ? "rv_storage" : "rv_cabinet";
+    
+    if (!stock[source][component] || stock[source][component] < qty) {
+        alert(`❌ В хранилище недостаточно ${component}! Осталось: ${stock[source][component] || 0}`);
+        return false;
+    }
+    
+    stock[source][component] -= qty;
+    if (!stock.truck[component]) stock.truck[component] = 0;
+    stock.truck[component] += qty;
+    
+    saveStockData(stock);
+    updatePOSAvailability();
+    showCurrentStock();
+    return true;
+}
+
+// Приготовить заготовки
+function prepareComponent(component, qty) {
+    const stock = getStockData();
+    const recipes = {
+        "овощи": { "овощи": 1 },
+        "вареный_рис": { "рис": 1 },
+        "картофельное_пюре": { "овощи": 1, "молоко": 1, "масло": 1 },
+        "мясной_фарш": { "мясо": 1 },
+        "рыбный_фарш": { "рыба": 1 },
+        "хлеб": { "мука": 1, "яйцо": 1 },
+        "макароны": { "мука": 1, "яйцо": 1 },
+        "сыр": { "молоко": 1 },
+        "котлета": { "мясо": 1, "масло": 1 },
+        "рыбная_котлета": { "рыба": 1, "масло": 1 },
+        "стейк_заг": { "мясо": 1, "фрукты": 1, "сахар": 1 },
+        "рыба_фрукт_заг": { "рыба": 1, "фрукты": 1, "сахар": 1 },
+        "масло": { "молоко": 1 },
+        "тесто": { "мука": 1, "яйцо": 1 },
+        "карамель": { "сахар": 1 }
+    };
+    
+    const recipe = recipes[component];
+    if (!recipe) {
+        alert("Этот компонент нельзя приготовить!");
+        return false;
+    }
+    
+    // Проверяем наличие сырья
+    for (let raw in recipe) {
+        const needed = recipe[raw] * qty;
+        const available = (stock.truck[raw] || 0) + (stock.rv_cabinet[raw] || 0) + (stock.rv_storage[raw] || 0);
+        if (available < needed) {
+            alert(`❌ Недостаточно сырья: ${COMPONENT_NAMES[raw] || raw}! Нужно: ${needed}, есть: ${available}`);
+            return false;
+        }
+    }
+    
+    // Расходуем сырьё (сначала из truck, потом из cabinet, потом storage)
+    for (let raw in recipe) {
+        let needed = recipe[raw] * qty;
+        const sources = ["truck", "rv_cabinet", "rv_storage"];
+        for (let src of sources) {
+            if (needed <= 0) break;
+            const available = stock[src][raw] || 0;
+            const take = Math.min(available, needed);
+            stock[src][raw] -= take;
+            needed -= take;
+        }
+    }
+    
+    // Добавляем готовое в truck
+    if (!stock.truck[component]) stock.truck[component] = 0;
+    stock.truck[component] += qty;
+    
+    saveStockData(stock);
+    updatePOSAvailability();
+    showCurrentStock();
+    return true;
+}
+
+// Показать текущие остатки в фудтраке
+function showCurrentStock() {
+    const stock = getStockData();
+    const container = document.getElementById("current_stock_display");
+    if (!container) return;
+    
+    let html = '<div style="background: #e8f4f8; border-left: 4px solid #2980b9; padding: 12px; border-radius: 6px; margin-bottom: 15px;">';
+    html += '<strong style="color: #2c3e50;">📦 Остатки в фудтраке:</strong>';
+    html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 10px;">';
+    
+    for (let comp in stock.truck) {
+        const name = COMPONENT_NAMES[comp] || comp;
+        const qty = stock.truck[comp];
+        let color = "#27ae60";
+        if (qty <= 5) color = "#e67e22";
+        if (qty === 0) color = "#e74c3c";
+        
+        html += `<div style="background: white; padding: 6px 10px; border-radius: 4px; font-size: 13px;">`;
+        html += `<span style="color: ${color}; font-weight: bold;">${qty}</span> ${name}`;
+        html += `</div>`;
+    }
+    
+    html += '</div></div>';
+    container.innerHTML = html;
+}
+
+// Модальное окно догрузки
+function openRestockModal() {
+    const stock = getStockData();
+    const logic = document.getElementById("business_logic").value;
+    
+    let html = '<div style="max-height: 60vh; overflow-y: auto;">';
+    html += '<p style="color: #7f8c8d; font-size: 14px;">Выберите компоненты для догрузки в фудтрак:</p>';
+    
+    const sources = [];
+    if (logic === "2" || logic === "3" || logic === "4") sources.push({ key: "rv_storage", name: "Багажник автодома" });
+    if (logic === "3" || logic === "4") sources.push({ key: "rv_cabinet", name: "Шкаф автодома" });
+    
+    if (sources.length === 0) {
+        html += '<p style="color: #e74c3c;">Нет хранилищ для догрузки (режим "Только фудтрак").</p>';
+    } else {
+        sources.forEach(src => {
+            const items = Object.keys(stock[src]).filter(k => stock[src][k] > 0);
+            if (items.length === 0) return;
+            
+            html += `<h4 style="margin: 15px 0 8px 0; color: #2c3e50;">${src.name}:</h4>`;
+            items.forEach(comp => {
+                const name = COMPONENT_NAMES[comp] || comp;
+                html += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border-radius: 4px; margin-bottom: 5px;">`;
+                html += `<span>${name} (${stock[src][comp]} шт.)</span>`;
+                html += `<div style="display: flex; gap: 5px;">`;
+                html += `<input type="number" id="restock_${src.key}_${comp}" value="10" min="1" max="${stock[src][comp]}" style="width: 60px; padding: 4px;">`;
+                html += `<button onclick="doRestock('${comp}', '${src.key}')" style="background: #27ae60; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">+</button>`;
+                html += `</div></div>`;
+            });
+        });
+    }
+    
+    html += '</div>';
+    
+    const modal = document.getElementById("sync_modal");
+    document.getElementById("sync_modal_title").innerText = "🔄 Догрузить в фудтрак";
+    document.getElementById("sync_modal_content").innerHTML = html;
+    modal.style.display = "flex";
+}
+
+function doRestock(comp, sourceKey) {
+    const input = document.getElementById(`restock_${sourceKey}_${comp}`);
+    const qty = parseInt(input.value) || 0;
+    if (qty <= 0) return;
+    
+    if (restockFromStorage(comp, qty, sourceKey)) {
+        const name = COMPONENT_NAMES[comp] || comp;
+        alert(`✅ Догружено: ${name} x${qty}`);
+        openRestockModal(); // Обновить модалку
+    }
+}
+
+// Модальное окно приготовления
+function openPrepareModal() {
+    const stock = getStockData();
+    const prepareList = ["овощи", "вареный_рис", "картофельное_пюре", "мясной_фарш", "рыбный_фарш", "хлеб", "макароны", "сыр", "котлета", "рыбная_котлета", "стейк_заг", "рыба_фрукт_заг", "масло", "тесто", "карамель"];
+    
+    let html = '<div style="max-height: 60vh; overflow-y: auto;">';
+    html += '<p style="color: #7f8c8d; font-size: 14px;">Выберите что приготовить (сырьё берётся из фудтрака/шкафа):</p>';
+    
+    prepareList.forEach(comp => {
+        const name = COMPONENT_NAMES[comp] || comp;
+        html += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border-radius: 4px; margin-bottom: 5px;">`;
+        html += `<span>${name} (сейчас: ${stock.truck[comp] || 0})</span>`;
+        html += `<div style="display: flex; gap: 5px;">`;
+        html += `<input type="number" id="prepare_${comp}" value="10" min="1" style="width: 60px; padding: 4px;">`;
+        html += `<button onclick="doPrepare('${comp}')" style="background: #8e44ad; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">👨‍🍳</button>`;
+        html += `</div></div>`;
+    });
+    
+    html += '</div>';
+    
+    const modal = document.getElementById("sync_modal");
+    document.getElementById("sync_modal_title").innerText = "👨‍🍳 Приготовить заготовки";
+    document.getElementById("sync_modal_content").innerHTML = html;
+    modal.style.display = "flex";
+}
+
+function doPrepare(comp) {
+    const input = document.getElementById(`prepare_${comp}`);
+    const qty = parseInt(input.value) || 0;
+    if (qty <= 0) return;
+    
+    if (prepareComponent(comp, qty)) {
+        const name = COMPONENT_NAMES[comp] || comp;
+        alert(`✅ Приготовлено: ${name} x${qty}`);
+        openPrepareModal();
+    }
+}
+
+// Модифицируем completeCurrentOrder для учёта остатков
+const originalCompleteOrder = completeCurrentOrder;
+completeCurrentOrder = function() {
+    const indices = Object.keys(currentOrder);
+    if (indices.length === 0) return;
+    
+    // Проверяем доступность перед проведением
+    for (let idxStr of indices) {
+        const idx = parseInt(idxStr);
+        const dish = DISH_DATABASE[idx];
+        if (!isDishAvailable(dish)) {
+            alert(`❌ Недостаточно компонентов для: ${dish.name}`);
+            return;
+        }
+    }
+    
+    // Вызываем оригинальную функцию (деньги, статистика)
+    originalCompleteOrder();
+    
+    // Уменьшаем остатки
+    const result = consumeStock(currentOrder);
+    
+    // Показываем уведомления
+    showStockNotifications(result);
+    
+    // Обновляем доступность кнопок
+    updatePOSAvailability();
+    
+    // Обновляем отображение остатков
+    showCurrentStock();
+};
