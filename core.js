@@ -5,6 +5,8 @@ const DISH_DATABASE = [...DISH_DATABASE_P1, ...DISH_DATABASE_P2, ...DISH_DATABAS
 
 // ==================== УПРАВЛЕНИЕ ВКЛАДКАМИ ====================
 function openTab(tabId, btnElement) {
+    console.log("Открываем вкладку:", tabId);
+    
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
         tab.style.display = 'none';
