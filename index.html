@@ -252,11 +252,11 @@ body.dark-theme select { background: #16213e; color: #e0e0e0; border-color: #0f3
         </tbody>
     </table>
 
-    <div class="btn-container" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
-        <button class="btn-calc" onclick="calculateLogisticsCore()">🚀 Рассчитать смену</button>
-        <button class="btn-save" onclick="saveToLocalStorage()"> Сохранить</button>
-        <button class="btn-save" onclick="exportData()" style="background-color: #16a085;"> Экспорт</button>
-        <button class="btn-save" onclick="importData()" style="background-color: #8e44ad;">📥 Импорт</button>
+    <div class="btn-container" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+        <button class="btn-calc" onclick="calculateLogisticsCore()" style="flex: 1 1 200px; min-width: 150px;">🚀 Рассчитать смену</button>
+        <button class="btn-save" onclick="saveToLocalStorage()" style="flex: 1 1 200px; min-width: 150px;">💾 Сохранить</button>
+        <button class="btn-save" onclick="exportData()" style="flex: 1 1 200px; min-width: 150px; background-color: #16a085;"> Экспорт</button>
+        <button class="btn-save" onclick="importData()" style="flex: 1 1 200px; min-width: 150px; background-color: #8e44ad;">📥 Импорт</button>
     </div>
     <div style="margin-top: 10px; text-align: center;">
         <button class="btn-reset" onclick="resetAllFields()" style="background-color: #c0392b; padding: 10px 20px; font-size: 14px;">🧹 Обнулить склады</button>
