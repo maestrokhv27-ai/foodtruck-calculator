@@ -3,53 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Система владельца Фудтрака | GTA 5 RP</title>
+    <title>ERP Фудтрака | GTA 5 RP</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; border-bottom: 3px solid #27ae60; padding-bottom: 10px; }
-        h2 { color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px; margin-top: 30px; }
-        .logic-select-box { background: #e8f4f8; border-left: 5px solid #2980b9; padding: 20px; border-radius: 6px; margin-bottom: 25px; }
-        .logic-select-box select { padding: 10px; font-size: 16px; width: 100%; max-width: 500px; border-radius: 4px; border: 1px solid #bdc3c7; }
-        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px dashed #7f8c8d; margin-bottom: 25px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Шапка */
+        .header { background: #2c3e50; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .header h1 { margin: 0; font-size: 20px; border: none; padding: 0; }
+        .header-actions { display: flex; gap: 10px; }
+        .header-btn { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .header-btn:hover { background: rgba(255,255,255,0.2); }
+
+        /* Навигация вкладок */
+        .tab-nav { display: flex; background: #34495e; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; border-bottom: 3px solid #27ae60; }
+        .tab-btn { flex: 1; min-width: 120px; background: none; border: none; color: #bdc3c7; padding: 15px 10px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; border-bottom: 3px solid transparent; margin-bottom: -3px; }
+        .tab-btn:hover { color: white; background: rgba(255,255,255,0.05); }
+        .tab-btn.active { color: #27ae60; border-bottom-color: #27ae60; background: rgba(39, 174, 96, 0.1); }
+
+        /* Контент вкладок */
+        .tab-content { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Стили элементов (адаптированные из вашего кода) */
+        h2 { color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px; margin-top: 0; font-size: 18px; }
+        .logic-select-box { background: #e8f4f8; border-left: 5px solid #2980b9; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .logic-select-box select { padding: 10px; font-size: 16px; width: 100%; border-radius: 4px; border: 1px solid #bdc3c7; }
+        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px dashed #7f8c8d; margin-bottom: 20px; }
         .config-group { display: flex; flex-direction: column; }
         .config-group label { font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #555; }
         .config-group input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .menu-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 20px; border-radius: 8px; background: #fff; margin-bottom: 25px; }
-        .menu-item { display: flex; align-items: center; font-size: 14px; cursor: pointer; padding: 4px; border-radius: 4px; }
+        .menu-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #fff; }
+        .menu-item { display: flex; align-items: center; font-size: 14px; cursor: pointer; padding: 6px; border-radius: 4px; }
         .menu-item:hover { background: #f0f3f4; }
         .menu-item input { margin-right: 10px; transform: scale(1.2); }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background-color: #34495e; color: white; font-size: 14px; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        td input[type="number"] { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100px; }
-        .btn-container { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-top: 25px; margin-bottom: 30px; }
-        button { color: white; border: none; padding: 16px; font-size: 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-        .btn-calc { background-color: #27ae60; } .btn-calc:hover { background-color: #2196f3; }
-        .btn-save { background-color: #2980b9; } .btn-save:hover { background-color: #3498db; }
-        .btn-reset { background-color: #c0392b; } .btn-reset:hover { background-color: #e74c3c; }
-        .result-box { background-color: #f4f9f4; border: 1px solid #27ae60; border-left: 6px solid #27ae60; padding: 25px; border-radius: 6px; display: none; margin-top: 30px; }
-        .result-box h3 { color: #27ae60; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #e2f0d9; padding-bottom: 8px; font-size: 18px; }
-        .result-box h3:first-child { margin-top: 0; }
-        .error-card { background-color: #fdf2f2; border: 1px solid #f8b4b4; border-left: 6px solid #e74c3c; color: #9b1c1c; padding: 15px; margin-top: 20px; border-radius: 6px; display: none; }
+        td input[type="number"] { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box; }
         
-        /* Кассовый аппарат */
-        #cash_register_block {
-            margin-top: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-        }
-        #cash_register_block p { margin-top: 0; }
-        #shift_report_block { box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+        .btn-calc { width: 100%; background-color: #27ae60; color: white; border: none; padding: 16px; font-size: 18px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px; }
+        .btn-calc:hover { background-color: #2196f3; }
+
+        .result-box { background-color: #f4f9f4; border: 1px solid #27ae60; border-left: 6px solid #27ae60; padding: 20px; border-radius: 6px; margin-top: 20px; }
+        .result-box h3 { color: #27ae60; margin-top: 0; border-bottom: 1px solid #e2f0d9; padding-bottom: 5px; }
+
+        /* POS Терминал стили */
+        .pos-summary { display: flex; justify-content: space-between; background: #2c3e50; color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .pos-summary div { text-align: center; flex: 1; }
+        .pos-menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 15px; }
+        .pos-item { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
         
+        /* Модальное окно */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 10px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+
         /* Тёмная тема */
         body.dark-theme { background-color: #1a1a2e; color: #e0e0e0; }
-        body.dark-theme .container { background: #16213e; color: #e0e0e0; }
-        body.dark-theme h1 { color: #e0e0e0; border-bottom-color: #27ae60; }
-        body.dark-theme h2 { color: #e0e0e0; border-bottom-color: #0f3460; }
+        body.dark-theme .container { background: #16213e; }
+        body.dark-theme .header { background: #0f3460; }
+        body.dark-theme .tab-nav { background: #0f3460; }
+        body.dark-theme .tab-btn { color: #b0b0b0; }
+        body.dark-theme .tab-btn.active { color: #27ae60; background: rgba(39, 174, 96, 0.1); }
         body.dark-theme .logic-select-box { background: #0f3460; }
         body.dark-theme .config-grid { background: #1a1a2e; border-color: #0f3460; }
         body.dark-theme .config-group label { color: #b0b0b0; }
@@ -58,230 +75,195 @@
         body.dark-theme .menu-item:hover { background: #0f3460; }
         body.dark-theme table { background: #16213e; }
         body.dark-theme th { background-color: #0f3460; }
-        body.dark-theme td { border-color: #0f3460; }
+        body.dark-theme td { border-color: #0f3460; color: #e0e0e0; }
         body.dark-theme td input[type="number"] { background: #1a1a2e; color: #e0e0e0; border-color: #0f3460; }
         body.dark-theme .result-box { background-color: #0f3460; border-color: #27ae60; }
-        body.dark-theme .result-box h3 { color: #27ae60; border-bottom-color: #1a1a2e; }
-        body.dark-theme .error-card { background-color: #4a1a1a; border-color: #e74c3c; color: #ff9999; }
-        body.dark-theme #recipe_chain_box { background: #1a1a2e; border-color: #8e44ad; }
-        body.dark-theme #recipe_chain_box h3 { color: #a569bd; }
-        body.dark-theme select { background: #16213e; color: #e0e0e0; border-color: #0f3460; }
-        body.dark-theme #cash_register_block { background: #1a1a2e; border-color: #0f3460; }
-        body.dark-theme #shift_report_block { box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        
-        /* Адаптивность таблиц для мобильных устройств */
+        body.dark-theme .modal-content { background: #16213e; color: #e0e0e0; }
+        body.dark-theme .pos-item { background: #1a1a2e; border-color: #0f3460; color: #e0e0e0; }
+
+        /* Адаптивность таблиц (ваша старая, она отличная) */
         @media screen and (max-width: 768px) {
-            #table_raw_stock, #table_raw_stock thead, #table_raw_stock tbody, #table_raw_stock tr {
-                display: block; width: 100%;
-            }
-            #table_raw_stock thead { display: none; }
-            #table_raw_stock tr {
-                margin-bottom: 15px; background: #f8f9fa;
-                border: 1px solid #ddd; border-radius: 8px; padding: 12px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            }
-            #table_raw_stock td {
-                display: flex; justify-content: space-between; align-items: center;
-                padding: 10px 0; border: none; border-bottom: 1px solid #e0e0e0;
-            }
-            #table_raw_stock td:last-child { border-bottom: none; }
-            #table_raw_stock td input[type="number"] { width: 100px; text-align: right; }
-            #table_raw_stock td:nth-child(1):before { content: "Продукт:"; font-weight: bold; color: #555; }
-            #table_raw_stock td:nth-child(2):before { content: "Цена:"; font-weight: bold; color: #555; }
-            #table_raw_stock td:nth-child(3):before { content: "Остаток:"; font-weight: bold; color: #555; }
-            
+            .tab-btn { font-size: 12px; padding: 12px 8px; min-width: 100px; }
+            #table_raw_stock, #table_raw_stock thead, #table_raw_stock tbody, #table_raw_stock tr,
             #table_ready_stock, #table_ready_stock thead, #table_ready_stock tbody, #table_ready_stock tr {
                 display: block; width: 100%;
             }
-            #table_ready_stock thead { display: none; }
-            #table_ready_stock tr {
-                margin-bottom: 15px; background: #f8f9fa;
-                border: 1px solid #ddd; border-radius: 8px; padding: 12px;
+            #table_raw_stock thead, #table_ready_stock thead { display: none; }
+            #table_raw_stock tr, #table_ready_stock tr {
+                margin-bottom: 15px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 12px;
             }
-            #table_ready_stock td {
-                display: flex; justify-content: space-between; align-items: center;
-                padding: 10px 0; border: none; border-bottom: 1px solid #e0e0e0;
+            body.dark-theme #table_raw_stock tr, body.dark-theme #table_ready_stock tr { background: #1a1a2e; border-color: #0f3460; }
+            #table_raw_stock td, #table_ready_stock td {
+                display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border: none; border-bottom: 1px solid #e0e0e0;
             }
-            #table_ready_stock td input[type="number"] { width: 100px; text-align: right; }
-            #table_ready_stock tr:nth-child(odd) td:nth-child(2):before { content: "В Траке:"; font-weight: bold; color: #27ae60; margin-right: 10px; }
-            #table_ready_stock tr:nth-child(even) td:nth-child(2):before { content: "В Траке:"; font-weight: bold; color: #27ae60; margin-right: 10px; }
-            #table_ready_stock tr:nth-child(odd) td:nth-child(3):before { content: "В Автодоме:"; font-weight: bold; color: #e67e22; margin-right: 10px; }
-            #table_ready_stock tr:nth-child(even) td:nth-child(3):before { content: "В Автодоме:"; font-weight: bold; color: #e67e22; margin-right: 10px; }
-            
-            #cash_register_block { padding: 15px; }
+            #table_raw_stock td:last-child, #table_ready_stock td:last-child { border-bottom: none; }
+            #table_raw_stock td input[type="number"], #table_ready_stock td input[type="number"] { width: 80px; text-align: right; }
+            #table_raw_stock td:nth-child(1):before { content: "Продукт:"; font-weight: bold; color: #555; }
+            body.dark-theme #table_raw_stock td:nth-child(1):before { color: #b0b0b0; }
+            #table_raw_stock td:nth-child(2):before { content: "Цена:"; font-weight: bold; color: #555; }
+            body.dark-theme #table_raw_stock td:nth-child(2):before { color: #b0b0b0; }
+            #table_raw_stock td:nth-child(3):before { content: "Остаток:"; font-weight: bold; color: #555; }
+            body.dark-theme #table_raw_stock td:nth-child(3):before { color: #b0b0b0; }
+            #table_ready_stock tr:nth-child(odd) td:nth-child(2):before, #table_ready_stock tr:nth-child(even) td:nth-child(2):before { content: "В Траке:"; font-weight: bold; color: #27ae60; margin-right: 10px; }
+            #table_ready_stock tr:nth-child(odd) td:nth-child(3):before, #table_ready_stock tr:nth-child(even) td:nth-child(3):before { content: "В Автодоме:"; font-weight: bold; color: #e67e22; margin-right: 10px; }
         }
     </style>
 </head>
 <body>
 <div class="container">
-<div style="text-align: right; margin-bottom: 10px;">
-    <button onclick="toggleTheme()" id="theme_btn" style="background: #34495e; color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 14px;"> Тёмная тема</button>
-</div>
-    <h1>🚚 Профессиональная ERP-Система Снабжения и Кулинарии</h1>
-
-    <h2>🎯 Выбор логики работы бизнеса:</h2>
-    <div class="logic-select-box">
-        <label style="font-weight: bold; display: block; margin-bottom: 8px;">Выберите ваш текущий формат работы на смене:</label>
-        <select id="business_logic" onchange="switchBusinessLogic()">
-            <option value="1">1. Работа только на Фудтраке (Лимит закупа: 50-100 кг, риск деспавна)</option>
-            <option value="2">2. Закупка на дополнительном легковом авто (Доставка сырья в Трак, лимит багажника)</option>
-            <option value="3">3. Максимальная цепочка (Легковое авто + Кемпер Автодом + Фудтрак)</option>
-        </select>
-    </div>
-
-    <h2>️ Настройка параметров вместимости и цен:</h2>
-    <div class="config-grid">
-        <div class="config-group" id="group_truck_limit">
-            <label>Холодильник Фудтрака (кг):</label>
-            <input type="number" id="cfg_truck_fridge" value="100">
-        </div>
-        <div class="config-group" id="group_car_limit">
-            <label>Багажник легкового авто (кг):</label>
-            <input type="number" id="cfg_car_trunk" value="245">
-        </div>
-        <div class="config-group" id="group_rv_storage">
-            <label>Багажник Автодома для заготовок (кг):</label>
-            <input type="number" id="cfg_rv_storage" value="260">
-        </div>
-        <div class="config-group" id="group_rv_cabinet">
-            <label>Шкаф Автодома для сырья (кг):</label>
-            <input type="number" id="cfg_rv_cabinet" value="300">
-        </div>
-        <div class="config-group">
-            <label>Ваша наценка на блюда (Маржа в %):</label>
-            <input type="number" id="cfg_margin_percent" value="40">
-        </div>
-        <div class="config-group">
-            <label>Рыночная цена РЫБЫ с рук (за 1 шт, $):</label>
-            <input type="number" id="cfg_fish_price" value="400">
+    <!-- Шапка -->
+    <div class="header">
+        <h1>🚚 ERP Фудтрака</h1>
+        <div class="header-actions">
+            <button class="header-btn" onclick="toggleTheme()" id="theme_btn">🌙 Тема</button>
+            <button class="header-btn" onclick="exportData()">📤 Экспорт</button>
+            <button class="header-btn" onclick="importData()">📥 Импорт</button>
         </div>
     </div>
 
-    <div style="margin-bottom: 20px;">
-        <button onclick="showFullRecipeChain()" style="background-color: #8e44ad; color: white; border: none; padding: 14px 28px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 15px;">📋 Показать полную цепочку приготовления</button>
+    <!-- Навигация -->
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="openTab('tab-settings', this)">⚙️ Настройки</button>
+        <button class="tab-btn" onclick="openTab('tab-inventory', this)">📦 Склад</button>
+        <button class="tab-btn" onclick="openTab('tab-procurement', this)">🛒 Закупка</button>
+        <button class="tab-btn" onclick="openTab('tab-pos', this)">🧾 Касса</button>
+        <button class="tab-btn" onclick="openTab('tab-recipes', this)">👨‍🍳 Рецепты</button>
+        <button class="tab-btn" onclick="openTab('tab-report', this)">📊 Отчет</button>
     </div>
 
-    <div id="recipe_chain_box" style="display: none; background: #f8f9fa; border: 2px solid #8e44ad; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
-        <h3 style="color: #8e44ad; margin-top: 0;">🔗 Полная цепочка приготовления</h3>
-        <div id="recipe_chain_content"></div>
-    </div>
-    
-    <h2>🛒 1. Выберите активное меню продаж на смену:</h2>
-    <div id="menu_checkboxes" class="menu-container"></div>
+    <!-- Вкладка 1: Настройки и Меню -->
+    <div id="tab-settings" class="tab-content active">
+        <h2>🎯 Логика работы бизнеса</h2>
+        <div class="logic-select-box">
+            <select id="business_logic" onchange="switchBusinessLogic()">
+                <option value="1">1. Только Фудтрак (Лимит 50-100 кг)</option>
+                <option value="2">2. Фудтрак + Легковое авто (Доставка)</option>
+                <option value="3">3. Максимальная цепочка (Авто + Кемпер + Трак)</option>
+            </select>
+        </div>
 
-    <h2 id="title_block3">🥣 2. Текущие остатки чистых заготовок (в порциях):</h2>
-    <p><small>*Внесите объемы заготовок, которые уже накручены поварами и лежат на хранении.</small></p>
-    <table id="table_ready_stock">
-        <thead>
-            <tr id="thead_ready_stock"></tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+        <h2>⚙️ Параметры вместимости и цен</h2>
+        <div class="config-grid">
+            <div class="config-group" id="group_truck_limit"><label>Холодильник Фудтрака (кг):</label><input type="number" id="cfg_truck_fridge" value="100"></div>
+            <div class="config-group" id="group_car_limit"><label>Багажник авто (кг):</label><input type="number" id="cfg_car_trunk" value="245"></div>
+            <div class="config-group" id="group_rv_storage"><label>Багажник Автодома (кг):</label><input type="number" id="cfg_rv_storage" value="260"></div>
+            <div class="config-group" id="group_rv_cabinet"><label>Шкаф Автодома (кг):</label><input type="number" id="cfg_rv_cabinet" value="300"></div>
+            <div class="config-group"><label>Наценка (Маржа %):</label><input type="number" id="cfg_margin_percent" value="40"></div>
+            <div class="config-group"><label>Цена РЫБЫ с рук ($):</label><input type="number" id="cfg_fish_price" value="400"></div</div>
 
-    <h2 id="title_block4"> 3. Текущие остатки базового сырья на складах (в штуках/порциях):</h2>
-    <table id="table_raw_stock" class="raw-stock-table">
-        <thead>
-            <tr>
-                <th>Продукт</th><th>Цена базы</th><th id="th_raw_stock_name">Текущий остаток</th>
-                <th>Продукт</th><th>Цена базы</th><th id="th_raw_stock_name_2">Текущий остаток</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>🥦 ОВОЩИ</td><td>$55</td><td><input type="number" id="stock_овощи" value="0"></td>
-                <td> РИС</td><td>$45</td><td><input type="number" id="stock_рис" value="0"></td>
-            </tr>
-            <tr>
-                <td> МЯСО</td><td>$500</td><td><input type="number" id="stock_мясо" value="0"></td>
-                <td>🍎 ФРУКТЫ</td><td>$55</td><td><input type="number" id="stock_фрукты" value="0"></td>
-            </tr>
-            <tr>
-                <td> САХАР</td><td>$45</td><td><input type="number" id="stock_сахар" value="0"></td>
-                <td>🌾 МУКА</td><td>$45</td><td><input type="number" id="stock_мука" value="0"></td>
-            </tr>
-            <tr>
-                <td>🥛 МОЛОКО</td><td>$55</td><td><input type="number" id="stock_молоко" value="0"></td>
-                <td> ЯЙЦО</td><td>$45</td><td><input type="number" id="stock_яйцо" value="0"></td>
-            </tr>
-            <tr>
-                <td>🐟 РЫБА (С рук)</td><td id="label_fish_price">$400</td><td><input type="number" id="stock_рыба" value="0"></td>
-                <td colspan="3" style="text-align: center; color: #95a5a6; font-style: italic;">— конец списка —</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="btn-container" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
-        <button class="btn-calc" onclick="calculateLogisticsCore()" style="flex: 1 1 200px; min-width: 150px;">🚀 Рассчитать смену</button>
-        <button class="btn-save" onclick="saveToLocalStorage()" style="flex: 1 1 200px; min-width: 150px;">💾 Сохранить</button>
-        <button class="btn-save" onclick="exportData()" style="flex: 1 1 200px; min-width: 150px; background-color: #16a085;">📤 Экспорт</button>
-        <button class="btn-save" onclick="importData()" style="flex: 1 1 200px; min-width: 150px; background-color: #8e44ad;">📥 Импорт</button>
-    </div>
-    <div style="margin-top: 10px; text-align: center;">
-        <button class="btn-reset" onclick="resetAllFields()" style="background-color: #c0392b; padding: 10px 20px; font-size: 14px;">🧹 Обнулить склады</button>
-    </div>
-    <div style="margin-top: 15px; text-align: center;">
-        <button onclick="openCashRegister()" style="background: #e67e22; color: white; border: none; padding: 14px 28px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px;">🧾 Открыть кассовый аппарат</button>
+        <h2>🛒 Выбор активного меню на смену</h2>
+        <div id="menu_checkboxes" class="menu-container"></div>
+        
+        <button class="btn-calc" onclick="calculateLogisticsCore()">🚀 РАССЧИТАТЬ СМЕНУ И ПЕРЕЙТИ К ЗАКУПКЕ</button>
     </div>
 
-    <div id="sync_modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center;">
-        <div style="background: white; padding: 25px; border-radius: 10px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+    <!-- Вкладка 2: Склад и Заготовки -->
+    <div id="tab-inventory" class="tab-content">
+        <h2>🥣 Текущие остатки готовых заготовок (в порциях)</h2>
+        <table id="table_ready_stock">
+            <thead><tr id="thead_ready_stock"></tr></thead>
+            <tbody></tbody>
+        </table>
+
+        <h2>📦 Текущие остатки базового сырья (в штуках)</h2>
+        <table id="table_raw_stock" class="raw-stock-table">
+            <thead>
+                <tr>
+                    <th>Продукт</th><th>Цена</th><th>Остаток</th>
+                    <th>Продукт</th><th>Цена</th><th>Остаток</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>🥦 ОВОЩИ</td><td>$55</td><td><input type="number" id="stock_овощи" value="0"></td><td>🍚 РИС</td><td>$45</td><td><input type="number" id="stock_рис" value="0"></td></tr>
+                <tr><td>🥩 МЯСО</td><td>$500</td><td><input type="number" id="stock_мясо" value="0"></td><td>🍎 ФРУКТЫ</td><td>$55</td><td><input type="number" id="stock_фрукты" value="0"></td></tr>
+                <tr><td>🍬 САХАР</td><td>$45</td><td><input type="number" id="stock_сахар" value="0"></td><td>🌾 МУКА</td><td>$45</td><td><input type="number" id="stock_мука" value="0"></td></tr>
+                <tr><td>🥛 МОЛОКО</td><td>$55</td><td><input type="number" id="stock_молоко" value="0"></td><td>🥚 ЯЙЦО</td><td>$45</td><td><input type="number" id="stock_яйцо" value="0"></td></tr>
+                <tr><td>🐟 РЫБА</td><td id="label_fish_price">$400</td><td><input type="number" id="stock_рыба" value="0"></td><td colspan="3" style="text-align: center; color: #95a5a6;">— конец списка —</td></tr>
+            </tbody>
+        </table>
+        <button class="btn-save" onclick="saveToLocalStorage()" style="width:100%; background:#2980b9; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;">💾 Сохранить остатки</button>
+        <button class="btn-reset" onclick="resetAllFields()" style="width:100%; background:#c0392b; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold; margin-top:10px;">🧹 Обнулить всё</button>
+    </div>
+
+    <!-- Вкладка 3: Закупка (Результат расчета) -->
+    <div id="tab-procurement" class="tab-content">
+        <div id="error_box" class="error-card" style="display:none;"></div>
+        <div id="result_box" class="result-box" style="display:none;">
+            <h3>📋 1. Накладная снабжения</h3>
+            <div id="res_shopping_list"></div>
+            <h3>🚛 2. Транспортный план</h3>
+            <div id="res_transport_plan"></div>
+            <div id="walk_stats" style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; font-size: 14px;"></div>
+            <h3>👨‍🍳 3. Загрузка Фудтрака</h3>
+            <div id="res_truck_loading"></div>
+            <h3>💰 4. Экономика смены (План)</h3>
+            <div id="res_economy_block"></div>
+        </div>
+        <div id="no_calc_msg" style="text-align: center; padding: 40px; color: #7f8c8d;">
+            <h3>⚠️ Данные отсутствуют</h3>
+            <p>Перейдите во вкладку "⚙️ Настройки", выберите меню и нажмите "РАССЧИТАТЬ СМЕНУ".</p>
+        </div>
+    </div>
+
+    <!-- Вкладка 4: Касса (POS) -->
+    <div id="tab-pos" class="tab-content">
+        <div class="pos-summary">
+            <div><div style="font-size: 12px; opacity: 0.8;">Выручка</div><div style="font-size: 20px; font-weight: bold; color: #2ecc71;" id="pos_shift_revenue">$0</div></div>
+            <div><div style="font-size: 12px; opacity: 0.8;">Прибыль</div><div style="font-size: 20px; font-weight: bold; color: #f1c40f;" id="pos_shift_profit">$0</div></div>
+            <div><div style="font-size: 12px; opacity: 0.8;">Заказов</div><div style="font-size: 20px; font-weight: bold;" id="pos_shift_orders">0</div></div>
+        </div>
+        <div id="cash_register_block">
+            <strong style="display: block; margin-bottom: 8px; color: #2c3e50;">📌 Добавить в текущий заказ:</strong>
+            <div id="pos_menu_grid" class="pos-menu-grid"></div>
+            
+            <div id="pos_active_order_block" style="background: white; border: 2px solid #3498db; border-radius: 6px; padding: 15px; display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 8px;">
+                    <strong style="color: #2980b9;">🛒 Текущий чек:</strong>
+                    <strong id="pos_current_total" style="color: #27ae60; font-size: 18px;">$0</strong>
+                </div>
+                <div id="pos_current_items" style="margin-bottom: 15px; font-size: 14px;"></div>
+                <div style="background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                    <strong style="color: #d35400; display: block; margin-bottom: 5px;">👨‍🍳 ЗАДАНИЕ КУХНЕ:</strong>
+                    <div id="pos_kitchen_ticket" style="font-size: 14px; line-height: 1.6;"></div>
+                </div>
+                <button onclick="completeCurrentOrder()" style="width: 100%; background: #27ae60; color: white; border: none; padding: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px;">✅ ПРОВЕСТИ ЗАКАЗ</button>
+            </div>
+            <div style="margin-top: 15px; text-align: center;">
+                <button onclick="resetShiftData()" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">🔄 Завершить смену</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка 5: Рецепты -->
+    <div id="tab-recipes" class="tab-content">
+        <button onclick="showFullRecipeChain()" style="width: 100%; background: #8e44ad; color: white; border: none; padding: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; margin-bottom: 15px;">🔄 Обновить цепочки для выбранного меню</button>
+        <div id="recipe_chain_box" style="display: none;">
+            <div id="recipe_chain_content"></div>
+        </div>
+        <div id="no_recipe_msg" style="text-align: center; padding: 40px; color: #7f8c8d;">
+            <p>Выберите блюда во вкладке "Настройки" и нажмите кнопку выше.</p>
+        </div>
+    </div>
+
+    <!-- Вкладка 6: Отчет -->
+    <div id="tab-report" class="tab-content">
+        <div id="shift_report_block" style="padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; color: white;">
+            <h3 style="margin-top: 0; color: white;">📊 Итоговый отчет по смене</h3>
+            <div id="shift_report_content">
+                <p style="text-align: center; opacity: 0.8;">Завершите заказы в кассе, чтобы сформировать отчет.</p>
+            </div>
+            <button onclick="exportShiftReport()" style="margin-top: 15px; width: 100%; background: white; color: #764ba2; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">📤 Скопировать отчет для отправки</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно (Экспорт/Импорт) -->
+    <div id="sync_modal" class="modal-overlay">
+        <div class="modal-content">
             <h3 id="sync_modal_title" style="margin-top: 0; color: #2c3e50;"></h3>
             <div id="sync_modal_content"></div>
             <div style="margin-top: 15px; text-align: right;">
                 <button onclick="closeSyncModal()" style="background: #95a5a6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Закрыть</button>
             </div>
-        </div>
-    </div>
-
-    <div id="error_box" class="error-card"></div>
-
-    <div id="result_box" class="result-box">
-        <h3>📋 1. Накладная снабжения (Что докупить/скупить)</h3>
-        <div id="res_shopping_list"></div>
-        
-        <h3>🚛 2. Транспортный план и весовой контроль</h3>
-        <div id="res_transport_plan"></div>
-        <div id="walk_stats" style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; font-size: 14px;"></div>
-        
-        <h3>👨‍🍳 3. Цеховой план загрузки Фудтрака перед выездом</h3>
-        <div id="res_truck_loading"></div>
-        
-        <h3>💰 4. Экономический потенциал смены</h3>
-        <div id="res_economy_block"></div>
-        
-        <h3>🧾 5. Кассовый аппарат — учёт продаж</h3>
-        <div id="cash_register_block">
-            <p style="color: #7f8c8d; font-size: 14px;">Введите количество проданных порций по каждому блюду. Выручка считается автоматически.</p>
-            <div id="cash_register_table"></div>
-            <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #27ae60;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span>Продано порций:</span>
-                    <strong id="cash_total_qty">0</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span>Выручка:</span>
-                    <strong id="cash_total_revenue" style="color: #27ae60; font-size: 18px;">$0</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span>Себестоимость:</span>
-                    <strong id="cash_total_cost">$0</strong>
-                </div>
-                <hr style="margin: 10px 0;">
-                <div style="display: flex; justify-content: space-between; font-size: 18px;">
-                    <span>💰 Чистая прибыль:</span>
-                    <strong id="cash_total_profit" style="color: #27ae60;">$0</strong>
-                </div>
-            </div>
-            <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <button onclick="finishShift()" style="background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; min-width: 150px;">✅ Завершить смену</button>
-                <button onclick="resetCashRegister()" style="background: #e67e22; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; min-width: 150px;">🔄 Обнулить кассу</button>
-            </div>
-        </div>
-        
-        <div id="shift_report_block" style="display: none; margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; color: white;">
-            <h3 style="margin-top: 0; color: white;">📊 Отчёт по смене</h3>
-            <div id="shift_report_content"></div>
-            <button onclick="exportShiftReport()" style="margin-top: 15px; background: white; color: #764ba2; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">📤 Экспортировать отчёт</button>
         </div>
     </div>
 </div>
