@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ERP Система владельца Фудтрака | GTA 5 RP</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 20px; }
@@ -29,160 +30,92 @@
         .btn-save { background-color: #2980b9; } .btn-save:hover { background-color: #3498db; }
         .btn-reset { background-color: #c0392b; } .btn-reset:hover { background-color: #e74c3c; }
         .result-box { background-color: #f4f9f4; border: 1px solid #27ae60; border-left: 6px solid #27ae60; padding: 25px; border-radius: 6px; display: none; margin-top: 30px; }
-        .result-box h3 { color: #27ae60; margin-top: 0; border-bottom: 1px solid #e2f0d9; padding-bottom: 5px; }
+        .result-box h3 { color: #27ae60; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #e2f0d9; padding-bottom: 8px; font-size: 18px; }
+        .result-box h3:first-child { margin-top: 0; }
         .error-card { background-color: #fdf2f2; border: 1px solid #f8b4b4; border-left: 6px solid #e74c3c; color: #9b1c1c; padding: 15px; margin-top: 20px; border-radius: 6px; display: none; }
-/* Тёмная тема */
-body.dark-theme { background-color: #1a1a2e; color: #e0e0e0; }
-body.dark-theme .container { background: #16213e; color: #e0e0e0; }
-body.dark-theme h1 { color: #e0e0e0; border-bottom-color: #27ae60; }
-body.dark-theme h2 { color: #e0e0e0; border-bottom-color: #0f3460; }
-body.dark-theme .logic-select-box { background: #0f3460; }
-body.dark-theme .config-grid { background: #1a1a2e; border-color: #0f3460; }
-body.dark-theme .config-group label { color: #b0b0b0; }
-body.dark-theme .config-group input { background: #16213e; color: #e0e0e0; border-color: #0f3460; }
-body.dark-theme .menu-container { background: #16213e; border-color: #0f3460; }
-body.dark-theme .menu-item:hover { background: #0f3460; }
-body.dark-theme table { background: #16213e; }
-body.dark-theme th { background-color: #0f3460; }
-body.dark-theme td { border-color: #0f3460; }
-body.dark-theme td input[type="number"] { background: #1a1a2e; color: #e0e0e0; border-color: #0f3460; }
-body.dark-theme .result-box { background-color: #0f3460; border-color: #27ae60; }
-body.dark-theme .result-box h3 { color: #27ae60; border-bottom-color: #1a1a2e; }
-body.dark-theme .error-card { background-color: #4a1a1a; border-color: #e74c3c; color: #ff9999; }
-body.dark-theme #recipe_chain_box { background: #1a1a2e; border-color: #8e44ad; }
-body.dark-theme #recipe_chain_box h3 { color: #a569bd; }
-body.dark-theme select { background: #16213e; color: #e0e0e0; border-color: #0f3460; }
-/* Адаптивность таблиц для мобильных устройств */
-@media screen and (max-width: 768px) {
-    /* Таблица остатков сырья */
-    #table_raw_stock, 
-    #table_raw_stock thead, 
-    #table_raw_stock tbody, 
-    #table_raw_stock tr {
-        display: block;
-        width: 100%;
-    }
-    
-    #table_raw_stock thead {
-        display: none; /* Скрываем шапку на мобильном */
-    }
-    
-    #table_raw_stock tr {
-        margin-bottom: 15px;
-        background: #f8f9fa;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    
-    #table_raw_stock td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 0;
-        border: none;
-        border-bottom: 1px solid #e0e0e0;
-    }
-    
-    #table_raw_stock td:last-child {
-        border-bottom: none;
-    }
-    
-    #table_raw_stock td input[type="number"] {
-        width: 100px;
-        text-align: right;
-    }
-    
-    /* Добавляем подписи перед каждым значением */
-    #table_raw_stock td:nth-child(1):before {
-        content: "Продукт:";
-        font-weight: bold;
-        color: #555;
-    }
-    
-    #table_raw_stock td:nth-child(2):before {
-        content: "Цена:";
-        font-weight: bold;
-        color: #555;
-    }
-    
-    #table_raw_stock td:nth-child(3):before {
-        content: "Остаток:";
-        font-weight: bold;
-        color: #555;
-    }
-    
-    /* Таблица готовых заготовок */
-    #table_ready_stock, 
-    #table_ready_stock thead, 
-    #table_ready_stock tbody, 
-    #table_ready_stock tr {
-        display: block;
-        width: 100%;
-    }
-    
-    #table_ready_stock thead {
-        display: none;
-    }
-    
-    #table_ready_stock tr {
-        margin-bottom: 15px;
-        background: #f8f9fa;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 12px;
-    }
-    
-    #table_ready_stock td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 0;
-        border: none;
-        border-bottom: 1px solid #e0e0e0;
-    }
-    
-    #table_ready_stock td input[type="number"] {
-        width: 100px;
-        text-align: right;
-    }
-    
-    /* Добавляем подписи для полей на мобильном */
-    #table_ready_stock tr:nth-child(odd) td:nth-child(2):before {
-        content: "В Траке:";
-        font-weight: bold;
-        color: #27ae60;
-        margin-right: 10px;
-    }
-    
-    #table_ready_stock tr:nth-child(even) td:nth-child(2):before {
-        content: "В Траке:";
-        font-weight: bold;
-        color: #27ae60;
-        margin-right: 10px;
-    }
-    
-    #table_ready_stock tr:nth-child(odd) td:nth-child(3):before {
-        content: "В Автодоме:";
-        font-weight: bold;
-        color: #e67e22;
-        margin-right: 10px;
-    }
-    
-    #table_ready_stock tr:nth-child(even) td:nth-child(3):before {
-        content: "В Автодоме:";
-        font-weight: bold;
-        color: #e67e22;
-        margin-right: 10px;
-    }
-}
+        
+        /* Кассовый аппарат */
+        #cash_register_block {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        #cash_register_block p { margin-top: 0; }
+        #shift_report_block { box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+        
+        /* Тёмная тема */
+        body.dark-theme { background-color: #1a1a2e; color: #e0e0e0; }
+        body.dark-theme .container { background: #16213e; color: #e0e0e0; }
+        body.dark-theme h1 { color: #e0e0e0; border-bottom-color: #27ae60; }
+        body.dark-theme h2 { color: #e0e0e0; border-bottom-color: #0f3460; }
+        body.dark-theme .logic-select-box { background: #0f3460; }
+        body.dark-theme .config-grid { background: #1a1a2e; border-color: #0f3460; }
+        body.dark-theme .config-group label { color: #b0b0b0; }
+        body.dark-theme .config-group input { background: #16213e; color: #e0e0e0; border-color: #0f3460; }
+        body.dark-theme .menu-container { background: #16213e; border-color: #0f3460; }
+        body.dark-theme .menu-item:hover { background: #0f3460; }
+        body.dark-theme table { background: #16213e; }
+        body.dark-theme th { background-color: #0f3460; }
+        body.dark-theme td { border-color: #0f3460; }
+        body.dark-theme td input[type="number"] { background: #1a1a2e; color: #e0e0e0; border-color: #0f3460; }
+        body.dark-theme .result-box { background-color: #0f3460; border-color: #27ae60; }
+        body.dark-theme .result-box h3 { color: #27ae60; border-bottom-color: #1a1a2e; }
+        body.dark-theme .error-card { background-color: #4a1a1a; border-color: #e74c3c; color: #ff9999; }
+        body.dark-theme #recipe_chain_box { background: #1a1a2e; border-color: #8e44ad; }
+        body.dark-theme #recipe_chain_box h3 { color: #a569bd; }
+        body.dark-theme select { background: #16213e; color: #e0e0e0; border-color: #0f3460; }
+        body.dark-theme #cash_register_block { background: #1a1a2e; border-color: #0f3460; }
+        body.dark-theme #shift_report_block { box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        
+        /* Адаптивность таблиц для мобильных устройств */
+        @media screen and (max-width: 768px) {
+            #table_raw_stock, #table_raw_stock thead, #table_raw_stock tbody, #table_raw_stock tr {
+                display: block; width: 100%;
+            }
+            #table_raw_stock thead { display: none; }
+            #table_raw_stock tr {
+                margin-bottom: 15px; background: #f8f9fa;
+                border: 1px solid #ddd; border-radius: 8px; padding: 12px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            }
+            #table_raw_stock td {
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 10px 0; border: none; border-bottom: 1px solid #e0e0e0;
+            }
+            #table_raw_stock td:last-child { border-bottom: none; }
+            #table_raw_stock td input[type="number"] { width: 100px; text-align: right; }
+            #table_raw_stock td:nth-child(1):before { content: "Продукт:"; font-weight: bold; color: #555; }
+            #table_raw_stock td:nth-child(2):before { content: "Цена:"; font-weight: bold; color: #555; }
+            #table_raw_stock td:nth-child(3):before { content: "Остаток:"; font-weight: bold; color: #555; }
+            
+            #table_ready_stock, #table_ready_stock thead, #table_ready_stock tbody, #table_ready_stock tr {
+                display: block; width: 100%;
+            }
+            #table_ready_stock thead { display: none; }
+            #table_ready_stock tr {
+                margin-bottom: 15px; background: #f8f9fa;
+                border: 1px solid #ddd; border-radius: 8px; padding: 12px;
+            }
+            #table_ready_stock td {
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 10px 0; border: none; border-bottom: 1px solid #e0e0e0;
+            }
+            #table_ready_stock td input[type="number"] { width: 100px; text-align: right; }
+            #table_ready_stock tr:nth-child(odd) td:nth-child(2):before { content: "В Траке:"; font-weight: bold; color: #27ae60; margin-right: 10px; }
+            #table_ready_stock tr:nth-child(even) td:nth-child(2):before { content: "В Траке:"; font-weight: bold; color: #27ae60; margin-right: 10px; }
+            #table_ready_stock tr:nth-child(odd) td:nth-child(3):before { content: "В Автодоме:"; font-weight: bold; color: #e67e22; margin-right: 10px; }
+            #table_ready_stock tr:nth-child(even) td:nth-child(3):before { content: "В Автодоме:"; font-weight: bold; color: #e67e22; margin-right: 10px; }
+            
+            #cash_register_block { padding: 15px; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
 <div style="text-align: right; margin-bottom: 10px;">
-    <button onclick="toggleTheme()" id="theme_btn" style="background: #34495e; color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 14px;">🌙 Тёмная тема</button>
+    <button onclick="toggleTheme()" id="theme_btn" style="background: #34495e; color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 14px;"> Тёмная тема</button>
 </div>
     <h1>🚚 Профессиональная ERP-Система Снабжения и Кулинарии</h1>
 
@@ -196,7 +129,7 @@ body.dark-theme select { background: #16213e; color: #e0e0e0; border-color: #0f3
         </select>
     </div>
 
-    <h2>⚙️ Настройка параметров вместимости и цен:</h2>
+    <h2>️ Настройка параметров вместимости и цен:</h2>
     <div class="config-grid">
         <div class="config-group" id="group_truck_limit">
             <label>Холодильник Фудтрака (кг):</label>
@@ -240,16 +173,12 @@ body.dark-theme select { background: #16213e; color: #e0e0e0; border-color: #0f3
     <p><small>*Внесите объемы заготовок, которые уже накручены поварами и лежат на хранении.</small></p>
     <table id="table_ready_stock">
         <thead>
-            <tr id="thead_ready_stock">
-                <!-- Генерируется через core.js -->
-            </tr>
+            <tr id="thead_ready_stock"></tr>
         </thead>
-        <tbody>
-            <!-- Генерируется динамически под выбранное меню -->
-        </tbody>
+        <tbody></tbody>
     </table>
 
-    <h2 id="title_block4">📦 3. Текущие остатки базового сырья на складах (в штуках/порциях):</h2>
+    <h2 id="title_block4"> 3. Текущие остатки базового сырья на складах (в штуках/порциях):</h2>
     <table id="table_raw_stock" class="raw-stock-table">
         <thead>
             <tr>
@@ -260,23 +189,23 @@ body.dark-theme select { background: #16213e; color: #e0e0e0; border-color: #0f3
         <tbody>
             <tr>
                 <td>🥦 ОВОЩИ</td><td>$55</td><td><input type="number" id="stock_овощи" value="0"></td>
-                <td>🍚 РИС</td><td>$45</td><td><input type="number" id="stock_рис" value="0"></td>
+                <td> РИС</td><td>$45</td><td><input type="number" id="stock_рис" value="0"></td>
             </tr>
             <tr>
-                <td>🥩 МЯСО</td><td>$500</td><td><input type="number" id="stock_мясо" value="0"></td>
+                <td> МЯСО</td><td>$500</td><td><input type="number" id="stock_мясо" value="0"></td>
                 <td>🍎 ФРУКТЫ</td><td>$55</td><td><input type="number" id="stock_фрукты" value="0"></td>
             </tr>
             <tr>
-                <td>🍬 САХАР</td><td>$45</td><td><input type="number" id="stock_сахар" value="0"></td>
+                <td> САХАР</td><td>$45</td><td><input type="number" id="stock_сахар" value="0"></td>
                 <td>🌾 МУКА</td><td>$45</td><td><input type="number" id="stock_мука" value="0"></td>
             </tr>
             <tr>
                 <td>🥛 МОЛОКО</td><td>$55</td><td><input type="number" id="stock_молоко" value="0"></td>
-                <td>🥚 ЯЙЦО</td><td>$45</td><td><input type="number" id="stock_яйцо" value="0"></td>
+                <td> ЯЙЦО</td><td>$45</td><td><input type="number" id="stock_яйцо" value="0"></td>
             </tr>
             <tr>
                 <td>🐟 РЫБА (С рук)</td><td id="label_fish_price">$400</td><td><input type="number" id="stock_рыба" value="0"></td>
-                <td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"></td>
+                <td colspan="3" style="text-align: center; color: #95a5a6; font-style: italic;">— конец списка —</td>
             </tr>
         </tbody>
     </table>
@@ -284,14 +213,16 @@ body.dark-theme select { background: #16213e; color: #e0e0e0; border-color: #0f3
     <div class="btn-container" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
         <button class="btn-calc" onclick="calculateLogisticsCore()" style="flex: 1 1 200px; min-width: 150px;">🚀 Рассчитать смену</button>
         <button class="btn-save" onclick="saveToLocalStorage()" style="flex: 1 1 200px; min-width: 150px;">💾 Сохранить</button>
-        <button class="btn-save" onclick="exportData()" style="flex: 1 1 200px; min-width: 150px; background-color: #16a085;"> Экспорт</button>
+        <button class="btn-save" onclick="exportData()" style="flex: 1 1 200px; min-width: 150px; background-color: #16a085;">📤 Экспорт</button>
         <button class="btn-save" onclick="importData()" style="flex: 1 1 200px; min-width: 150px; background-color: #8e44ad;">📥 Импорт</button>
     </div>
     <div style="margin-top: 10px; text-align: center;">
         <button class="btn-reset" onclick="resetAllFields()" style="background-color: #c0392b; padding: 10px 20px; font-size: 14px;">🧹 Обнулить склады</button>
     </div>
+    <div style="margin-top: 15px; text-align: center;">
+        <button onclick="openCashRegister()" style="background: #e67e22; color: white; border: none; padding: 14px 28px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px;">🧾 Открыть кассовый аппарат</button>
+    </div>
 
-    <!-- Модальное окно для экспорта/импорта -->
     <div id="sync_modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center;">
         <div style="background: white; padding: 25px; border-radius: 10px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
             <h3 id="sync_modal_title" style="margin-top: 0; color: #2c3e50;"></h3>
@@ -315,7 +246,7 @@ body.dark-theme select { background: #16213e; color: #e0e0e0; border-color: #0f3
         <h3>👨‍🍳 3. Цеховой план загрузки Фудтрака перед выездом</h3>
         <div id="res_truck_loading"></div>
         
-                <h3>💰 4. Экономический потенциал смены</h3>
+        <h3>💰 4. Экономический потенциал смены</h3>
         <div id="res_economy_block"></div>
         
         <h3>🧾 5. Кассовый аппарат — учёт продаж</h3>
@@ -355,7 +286,6 @@ body.dark-theme select { background: #16213e; color: #e0e0e0; border-color: #0f3
     </div>
 </div>
 
-<!-- Подключение логических модулей системы -->
 <script src="menu_part1.js"></script>
 <script src="menu_part2.js"></script>
 <script src="menu_part3.js"></script>
