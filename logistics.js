@@ -81,8 +81,9 @@ function calculateLogisticsCore() {
         let sp = Math.round(cp * (1 + m / 100));
         cog += g * cp;
         rev += g * sp;
-        htmlPrices += `<li style='margin-bottom:8px;padding:8px;background:#fff;border-radius:4px;border-left:4px solid #2980b9;'>💵 <b>${dish.name}</b> ➜ Цена: <strong style="color:#2980b9;">$${sp}</strong> <small>(себес: $${cp})</small> | Смена: <b>${g} порц.</b></li>`;
-    });
+        lastCalculatedPrices[idx] = sp;
+        lastCalculatedCosts[idx] = cp;
+        htmlPrices += `<li style='margin-bottom:8px;padding:8px;background:#fff;border-radius:4px;border-left:4px solid #2980b9;'>💵 <b>${dish.name}</b> ➜ Цена: <strong style="color:#2980b9;">$${sp}</strong> <small>(себес: $${cp})</small> | Смена: <b>${g} порц.</b></li>`;    });
     htmlPrices += "</ul>";
 
     let orig = JSON.parse(JSON.stringify(req));
@@ -309,4 +310,222 @@ function showComponentChain(component, qty, level, parentIndex) {
     }
     
     return html;
+}
+// ==================== КАССОВЫЙ АППАРАТ ====================
+let lastCalculatedPrices = {}; // Храним рассчитанные цены
+
+// Модифицируем calculateLogisticsCore — сохраняем цены
+const originalCalculate = calculateLogisticsCore;
+// (мы просто добавим сохранение в существующую функцию — см. ниже)
+
+function buildCashRegister() {
+    const container = document.getElementById("cash_register_table");
+    if (!container) return;
+    
+    const selectedDishes = [];
+    DISH_DATABASE.forEach((dish, idx) => {
+        if (document.getElementById(`dish_${idx}`) && document.getElementById(`dish_${idx}`).checked) {
+            selectedDishes.push({ dish, idx });
+        }
+    });
+    
+    if (selectedDishes.length === 0) {
+        container.innerHTML = '<p style="color: #95a5a6;">Сначала выберите блюда в меню и нажмите "Рассчитать смену"</p>';
+        return;
+    }
+    
+    let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+    
+    selectedDishes.forEach(({ dish, idx }) => {
+        const price = lastCalculatedPrices[idx] || 0;
+        const cost = lastCalculatedCosts[idx] || 0;
+        const savedQty = localStorage.getItem(`cash_qty_${idx}`) || 0;
+        
+        html += `
+            <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: white; border-radius: 6px; border: 1px solid #e0e0e0; flex-wrap: wrap;">
+                <div style="flex: 2; min-width: 150px;">
+                    <strong>${dish.name}</strong>
+                    <div style="font-size: 12px; color: #7f8c8d;">Цена: $${price} | Себес: $${cost}</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="font-size: 13px;">Продано:</label>
+                    <input type="number" 
+                           id="cash_qty_${idx}" 
+                           value="${savedQty}" 
+                           min="0" 
+                           onchange="updateCashRegister()"
+                           oninput="updateCashRegister()"
+                           style="width: 70px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-size: 16px; font-weight: bold;">
+                    <span style="font-size: 13px; color: #7f8c8d;">шт.</span>
+                </div>
+                <div style="flex: 1; text-align: right; min-width: 100px;">
+                    <div style="font-size: 16px; font-weight: bold; color: #27ae60;" id="cash_line_${idx}">$${(savedQty * price).toLocaleString()}</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+    updateCashRegister();
+}
+
+function updateCashRegister() {
+    let totalQty = 0;
+    let totalRevenue = 0;
+    let totalCost = 0;
+    
+    DISH_DATABASE.forEach((dish, idx) => {
+        const qtyEl = document.getElementById(`cash_qty_${idx}`);
+        if (!qtyEl) return;
+        
+        const qty = parseInt(qtyEl.value) || 0;
+        const price = lastCalculatedPrices[idx] || 0;
+        const cost = lastCalculatedCosts[idx] || 0;
+        const lineTotal = qty * price;
+        
+        const lineEl = document.getElementById(`cash_line_${idx}`);
+        if (lineEl) lineEl.innerText = '$' + lineTotal.toLocaleString();
+        
+        // Сохраняем в localStorage
+        localStorage.setItem(`cash_qty_${idx}`, qty);
+        
+        totalQty += qty;
+        totalRevenue += lineTotal;
+        totalCost += qty * cost;
+    });
+    
+    const profit = totalRevenue - totalCost;
+    
+    document.getElementById("cash_total_qty").innerText = totalQty;
+    document.getElementById("cash_total_revenue").innerText = '$' + totalRevenue.toLocaleString();
+    document.getElementById("cash_total_cost").innerText = '$' + totalCost.toLocaleString();
+    document.getElementById("cash_total_profit").innerText = '$' + profit.toLocaleString();
+}
+
+function finishShift() {
+    const totalQty = parseInt(document.getElementById("cash_total_qty").innerText) || 0;
+    const totalRevenue = parseInt(document.getElementById("cash_total_revenue").innerText.replace(/\D/g, '')) || 0;
+    const totalCost = parseInt(document.getElementById("cash_total_cost").innerText.replace(/\D/g, '')) || 0;
+    const profit = totalRevenue - totalCost;
+    
+    if (totalQty === 0) {
+        alert("Вы не продали ни одной порции! Проверьте данные.");
+        return;
+    }
+    
+    // Формируем отчёт
+    const shiftData = {
+        date: new Date().toLocaleString("ru-RU"),
+        totalQty,
+        totalRevenue,
+        totalCost,
+        profit,
+        dishes: []
+    };
+    
+    DISH_DATABASE.forEach((dish, idx) => {
+        const qty = parseInt(localStorage.getItem(`cash_qty_${idx}`)) || 0;
+        if (qty > 0) {
+            shiftData.dishes.push({
+                name: dish.name,
+                qty,
+                price: lastCalculatedPrices[idx] || 0,
+                total: qty * (lastCalculatedPrices[idx] || 0)
+            });
+        }
+    });
+    
+    // Сохраняем последнюю смену
+    localStorage.setItem("last_shift", JSON.stringify(shiftData));
+    
+    // Показываем отчёт
+    const reportBlock = document.getElementById("shift_report_block");
+    const reportContent = document.getElementById("shift_report_content");
+    
+    let html = `
+        <div style="margin-bottom: 15px;">
+            <div style="font-size: 14px; opacity: 0.9;">📅 Дата: ${shiftData.date}</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span>Продано порций:</span>
+                <strong>${shiftData.totalQty}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span>Выручка:</span>
+                <strong>$${shiftData.totalRevenue.toLocaleString()}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span>Себестоимость:</span>
+                <strong>$${shiftData.totalCost.toLocaleString()}</strong>
+            </div>
+            <hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">
+            <div style="display: flex; justify-content: space-between; font-size: 20px;">
+                <span>💰 Прибыль:</span>
+                <strong>$${shiftData.profit.toLocaleString()}</strong>
+            </div>
+        </div>
+        <div style="font-size: 14px; margin-bottom: 10px;"><strong>Детализация по блюдам:</strong></div>
+    `;
+    
+    shiftData.dishes.forEach(d => {
+        html += `
+            <div style="display: flex; justify-content: space-between; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 5px; font-size: 14px;">
+                <span>${d.name} × ${d.qty}</span>
+                <strong>$${d.total.toLocaleString()}</strong>
+            </div>
+        `;
+    });
+    
+    reportContent.innerHTML = html;
+    reportBlock.style.display = "block";
+    reportBlock.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function resetCashRegister() {
+    if (!confirm("Обнулить все продажи в кассе?")) return;
+    
+    DISH_DATABASE.forEach((dish, idx) => {
+        localStorage.removeItem(`cash_qty_${idx}`);
+        const el = document.getElementById(`cash_qty_${idx}`);
+        if (el) el.value = 0;
+    });
+    
+    document.getElementById("shift_report_block").style.display = "none";
+    updateCashRegister();
+}
+
+function exportShiftReport() {
+    const shiftData = JSON.parse(localStorage.getItem("last_shift") || "{}");
+    if (!shiftData.date) {
+        alert("Нет данных о последней смене!");
+        return;
+    }
+    
+    let text = ` ОТЧЁТ ПО СМЕНЕ\n`;
+    text += `📅 Дата: ${shiftData.date}\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `Продано порций: ${shiftData.totalQty}\n`;
+    text += `Выручка: $${shiftData.totalRevenue.toLocaleString()}\n`;
+    text += `Себестоимость: $${shiftData.totalCost.toLocaleString()}\n`;
+    text += `💰 ПРИБЫЛЬ: $${shiftData.profit.toLocaleString()}\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `Детализация:\n`;
+    
+    shiftData.dishes.forEach(d => {
+        text += `• ${d.name} × ${d.qty} = $${d.total.toLocaleString()}\n`;
+    });
+    
+    // Показываем в модальном окне
+    const modal = document.getElementById("sync_modal");
+    document.getElementById("sync_modal_title").innerText = "📤 Отчёт по смене";
+    document.getElementById("sync_modal_content").innerHTML = `
+        <textarea id="export_code" readonly style="width: 100%; height: 250px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: monospace; font-size: 13px; resize: vertical;">${text}</textarea>
+        <div style="margin-top: 10px; text-align: center;">
+            <button onclick="copyExportCode()" style="background: #27ae60; color: white; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; font-weight: bold;">📋 Скопировать</button>
+        </div>
+        <p id="copy_status" style="color: #27ae60; font-size: 13px; margin-top: 10px; display: none;">✅ Скопировано!</p>
+    `;
+    modal.style.display = "flex";
 }
