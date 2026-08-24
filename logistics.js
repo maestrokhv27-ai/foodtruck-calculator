@@ -6,21 +6,28 @@ let shiftStats = { revenue: 0, profit: 0, orders: 0 };
 
 // ==================== ОСНОВНОЙ РАСЧЁТ ====================
 function calculateLogisticsCore() {
-    const l = document.getElementById("business_logic").value;
-    const t = parseFloat(document.getElementById("cfg_truck_fridge").value) || 100;
-    const c = parseFloat(document.getElementById("cfg_car_trunk").value) || 245;
-    const e = parseFloat(document.getElementById("cfg_rv_storage").value) || 260;
-    const a = parseFloat(document.getElementById("cfg_rv_cabinet").value) || 300;
-    const m = parseFloat(document.getElementById("cfg_margin_percent").value) || 40;
-    const o = parseFloat(document.getElementById("cfg_fish_price").value) || 400;
+    // Безопасное получение элементов с проверками
+    const getVal = (id, def) => {
+        const el = document.getElementById(id);
+        return el ? (parseFloat(el.value) || def) : def;
+    };
+    const getEl = (id) => document.getElementById(id);
 
-    if (document.getElementById("label_fish_price")) {
-        document.getElementById("label_fish_price").innerText = "$" + o;
-    }
+    const l = getEl("business_logic") ? getEl("business_logic").value : "1";
+    const t = getVal("cfg_truck_fridge", 100);
+    const c = getVal("cfg_car_trunk", 245);
+    const e = getVal("cfg_rv_storage", 260);
+    const a = getVal("cfg_rv_cabinet", 300);
+    const m = getVal("cfg_margin_percent", 40);
+    const o = getVal("cfg_fish_price", 400);
+
+    const fishLabel = getEl("label_fish_price");
+    if (fishLabel) fishLabel.innerText = "$" + o;
 
     let s = [];
     DISH_DATABASE.forEach((dish, idx) => {
-        if (document.getElementById(`dish_${idx}`) && document.getElementById(`dish_${idx}`).checked) {
+        const el = getEl(`dish_${idx}`);
+        if (el && el.checked) {
             s.push(dish);
         }
     });
@@ -96,8 +103,8 @@ function calculateLogisticsCore() {
 
     let orig = JSON.parse(JSON.stringify(req));
     for (let k in req) {
-        let tQ = document.getElementById(`ready_${k}_трак`) ? parseFloat(document.getElementById(`ready_${k}_трак`).value) || 0 : 0;
-        let rQ = document.getElementById(`ready_${k}_авд`) ? parseFloat(document.getElementById(`ready_${k}_авд`).value) || 0 : 0;
+        let tQ = getEl(`ready_${k}_трак`) ? parseFloat(getEl(`ready_${k}_трак`).value) || 0 : 0;
+        let rQ = getEl(`ready_${k}_авд`) ? parseFloat(getEl(`ready_${k}_авд`).value) || 0 : 0;
         req[k] = Math.max(0, req[k] - (l === "3" ? (tQ + rQ) : tQ));
     }
 
@@ -124,7 +131,8 @@ function calculateLogisticsCore() {
 
     let w = 0, bc = 0, fc = 0, htmlShop = "<ul>", hasDef = false;
     for (let k in rawR) {
-        let st = parseFloat(document.getElementById(`stock_${k}`).value) || 0;
+        const stockEl = getEl(`stock_${k}`);
+        let st = stockEl ? (parseFloat(stockEl.value) || 0) : 0;
         let df = Math.max(0, rawR[k] - st);
         if (df > 0) {
             hasDef = true;
@@ -144,24 +152,36 @@ function calculateLogisticsCore() {
     }
     htmlShop += "</ul>";
 
-    document.getElementById("error_box").style.display = "none";
-    document.getElementById("result_box").style.display = "block";
-    document.getElementById("no_calc_msg").style.display = "none";
+    // Безопасное обновление UI
+    const errorBox = getEl("error_box");
+    const resultBox = getEl("result_box");
+    const noCalcMsg = getEl("no_calc_msg");
+    const shoppingList = getEl("res_shopping_list");
+    const transportPlan = getEl("res_transport_plan");
+    const walkStats = getEl("walk_stats");
+    const truckLoading = getEl("res_truck_loading");
+    const economyBlock = getEl("res_economy_block");
+
+    if (errorBox) errorBox.style.display = "none";
+    if (resultBox) resultBox.style.display = "block";
+    if (noCalcMsg) noCalcMsg.style.display = "none";
 
     let inf = `<p>Выбранных позиций: <strong>${s.length}</strong>. На позицию: <strong>${g} порц.</strong> (заготовок на порцию: ${totalComponentsPerServing})</p>`;
-    inf += `<p>🏪 Бюджет на оптовую базу: <b>$${bc.toLocaleString()}</b> |  Наличка на скупку рыбы: <b style="color:#e67e22;">$${fc.toLocaleString()}</b></p>`;
+    inf += `<p>🏪 Бюджет на оптовую базу: <b>$${bc.toLocaleString()}</b> | 🎣 Наличка на скупку рыбы: <b style="color:#e67e22;">$${fc.toLocaleString()}</b></p>`;
     inf += `<p><strong>🔥 ОБЩИЙ РАСХОД:</strong> <span style="color:#2980b9;font-weight:bold;">$${(bc + fc).toLocaleString()}</span></p>${hasDef ? htmlShop : "<p>✅ ЗАПАСОВ СЫРЬЯ ХВАТАЕТ!</p>"}`;
     
-    document.getElementById("res_shopping_list").innerHTML = inf;
+    if (shoppingList) shoppingList.innerHTML = inf;
 
     let trips = Math.ceil(w / r);
     let tHtml = `<p>⚖️ Вес сырья для закупки: <strong>${w.toFixed(1)} кг</strong> (Лимит транспорта: ${r} кг).</p>`;
     tHtml += `<p style="font-size: 13px; color: #7f8c8d;"><small>*Это вес сырья с базы. Вес готовых заготовок будет рассчитан в блоке 3.</small></p>`;
     
     if (l === "1" && w > r) {
-        document.getElementById("error_box").style.display = "block";
-        document.getElementById("result_box").style.display = "none";
-        document.getElementById("error_box").innerHTML = "⚠️ ПЕРЕГРУЗ ТРАКА! Вес закупки превышает лимит холодильника. Уменьшите меню или объем партии, чтобы избежать деспавна.";
+        if (errorBox) {
+            errorBox.style.display = "block";
+            errorBox.innerHTML = "⚠️ ПЕРЕГРУЗ ТРАКА! Вес закупки превышает лимит холодильника. Уменьшите меню или объем партии, чтобы избежать деспавна.";
+        }
+        if (resultBox) resultBox.style.display = "none";
         return;
     } else if (w > r) {
         tHtml += `<p style="color:#c0392b;font-weight:bold;">⚠️ Потребуется: ${trips} рейса(ов).</p>`;
@@ -169,11 +189,10 @@ function calculateLogisticsCore() {
         tHtml += `<p style="color:#27ae60;font-weight:bold;">✅ Доставится за 1 рейс!</p>`;
     }
     
-    document.getElementById("res_transport_plan").innerHTML = tHtml;
+    if (transportPlan) transportPlan.innerHTML = tHtml;
     
-    const walkStatsEl = document.getElementById("walk_stats");
-    if (walkStatsEl) {
-        walkStatsEl.innerHTML = (w > 0 && l === "2") ? `<p>🏃 Перетаскивание из багажника: <strong>${Math.ceil(w / 10)} ходок</strong> (по ~10 кг за раз).</p>` : `<p>✅ Разгрузка не требуется или выполняется иначе.</p>`;
+    if (walkStats) {
+        walkStats.innerHTML = (w > 0 && l === "2") ? `<p>🏃 Перетаскивание из багажника: <strong>${Math.ceil(w / 10)} ходок</strong> (по ~10 кг за раз).</p>` : `<p>✅ Разгрузка не требуется или выполняется иначе.</p>`;
     }
 
     let lHtml = `<p><small>*Переложите из багажника кемпера в холодильник фудтрака:</small></p>`;
@@ -203,24 +222,22 @@ function calculateLogisticsCore() {
     }
     lHtml += `</p><ul>${prepItems.join('')}</ul>`;
     
-    document.getElementById("res_truck_loading").innerHTML = lHtml;
+    if (truckLoading) truckLoading.innerHTML = lHtml;
 
     let prof = rev - cog;
     let eHtml = `${htmlPrices}<hr><p>Полный себес: <strong>$${cog.toLocaleString()}</strong> | Выручка: <strong>$${rev.toLocaleString()}</strong></p><p style="font-size:16px;">💰 <b>Чистая прибыль:</b> <span style="color:#27ae60;font-weight:bold;">$${prof.toLocaleString()}</span></p>`;
-    document.getElementById("res_economy_block").innerHTML = eHtml;
+    if (economyBlock) economyBlock.innerHTML = eHtml;
 
-    initPOS();
+    // Инициализируем POS и переключаем вкладку
+    if (typeof initPOS === 'function') initPOS();
     
-    // Надежное переключение на вкладку закупки
+    // Надёжное переключение на вкладку закупки
     setTimeout(() => {
-        const allTabs = document.querySelectorAll('.tab-content');
-        const allBtns = document.querySelectorAll('.tab-btn');
-        
-        allTabs.forEach(tab => {
+        document.querySelectorAll('.tab-content').forEach(tab => {
             tab.classList.remove('active');
             tab.style.display = 'none';
         });
-        allBtns.forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         
         const procurementTab = document.getElementById('tab-procurement');
         if (procurementTab) {
@@ -228,57 +245,12 @@ function calculateLogisticsCore() {
             setTimeout(() => procurementTab.classList.add('active'), 10);
         }
         
-        // Подсвечиваем кнопку "Закупка"
-        allBtns.forEach(btn => {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
             if (btn.innerText.includes('Закупка')) {
                 btn.classList.add('active');
             }
         });
     }, 100);
-}
-
-// ==================== ЦЕПОЧКА ПРИГОТОВЛЕНИЯ ====================
-function showFullRecipeChain() {
-    const selectedDishes = [];
-    DISH_DATABASE.forEach((dish, idx) => {
-        if (document.getElementById(`dish_${idx}`) && document.getElementById(`dish_${idx}`).checked) {
-            selectedDishes.push(dish);
-        }
-    });
-
-    if (selectedDishes.length === 0) {
-        alert("Выберите хотя бы одно блюдо из меню!");
-        return;
-    }
-
-    const box = document.getElementById("recipe_chain_box");
-    const content = document.getElementById("recipe_chain_content");
-    let html = "";
-    
-    selectedDishes.forEach((dish) => {
-        html += `<div class="recipe-card">`;
-        html += `<h4>${dish.name}</h4>`;
-        html += `<div style="font-size: 13px; color: #7f8c8d; margin-bottom: 15px; font-style: italic;">${dish.craft}</div>`;
-        html += `<div style="margin-left: 10px;">`;
-        html += `<strong style="color: #27ae60;">🧪 Необходимые компоненты:</strong>`;
-        html += `<ol style="margin: 10px 0; padding-left: 25px; line-height: 1.8;">`;
-        
-        let compIndex = 0;
-        for (let component in dish.recipe) {
-            compIndex++;
-            const qty = dish.recipe[component];
-            const compName = COMPONENT_NAMES[component] || component;
-            html += `<li style="margin-bottom: 8px;"><strong>${compName}</strong> — ${qty} шт.`;
-            html += showComponentChain(component, qty, 1, compIndex);
-            html += `</li>`;
-        }
-        html += `</ol></div></div>`;
-    });
-    
-    content.innerHTML = html;
-    box.style.display = "block";
-    document.getElementById("no_recipe_msg").style.display = "none";
-    box.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 function showComponentChain(component, qty, level, parentIndex) {
