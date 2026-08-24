@@ -1,4 +1,6 @@
 function calculateLogisticsCore() {
+    let lastCalculatedPrices = {};
+    let lastCalculatedCosts = {};
     const l = document.getElementById("business_logic").value;
     const t = parseFloat(document.getElementById("cfg_truck_fridge").value) || 100;
     const c = parseFloat(document.getElementById("cfg_car_trunk").value) || 245;
@@ -133,6 +135,7 @@ function calculateLogisticsCore() {
                 htmlShop += `<li><strong>${k.toUpperCase()}:</strong> ${bx} кор. (${bx * 10} порц.) — $${(bx * 10 * pr[k]).toLocaleString()}</li>`;
             }
         }
+        buildCashRegister();
     }
     htmlShop += "</ul>";
 
