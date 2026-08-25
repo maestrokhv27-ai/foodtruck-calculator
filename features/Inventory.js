@@ -150,19 +150,17 @@ const Inventory = {
         
         // Функция для создания ячейки
         function makeCell(item, inTruck, inRV, showRV) {
-            var html = '<td>' + (COMPONENT_NAMES[item] || item) + '</td>';
-            
-            // Ячейка Фудтрак — ВСЕГДА поле ввода
-            html += '<td><input type="number" class="prep-input" id="prep_' + item + '_truck" value="' + (prepStock.truck[item] || 0) + '" data-item="' + item + '" data-location="truck"' + 
-                    (inTruck ? '' : ' style="background: #f5f5f5; color: #999;"') + '></td>';
-            
-            if (showRV) {
-                // Ячейка Автодом — ВСЕГДА поле ввода
-                html += '<td><input type="number" class="prep-input" id="prep_' + item + '_rv" value="' + (prepStock.rvStorage[item] || 0) + '" data-item="' + item + '" data-location="rvStorage"' + 
-                        (inRV ? '' : ' style="background: #f5f5f5; color: #999;"') + '></td>';
-            }
-            return html;
-        }
+    var html = '<td>' + (COMPONENT_NAMES[item] || item) + '</td>';
+    
+    // Ячейка Фудтрак — ВСЕГДА активное поле
+    html += '<td><input type="number" class="prep-input" id="prep_' + item + '_truck" value="' + (prepStock.truck[item] || 0) + '" data-item="' + item + '" data-location="truck"></td>';
+    
+    if (showRV) {
+        // Ячейка Автодом — ВСЕГДА активное поле
+        html += '<td><input type="number" class="prep-input" id="prep_' + item + '_rv" value="' + (prepStock.rvStorage[item] || 0) + '" data-item="' + item + '" data-location="rvStorage"></td>';
+    }
+    return html;
+}
         
         var rowHtml = makeCell(item1, inTruck1, inRV1, showRV);
         if (item2) {
