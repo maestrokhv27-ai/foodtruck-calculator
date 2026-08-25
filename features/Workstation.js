@@ -64,7 +64,7 @@ const Workstation = {
     },
     
     renderPOS() {
-        if (!this.posGrid || !DISH_DATABASE) return;
+        if (!this.posGrid || !window.DISH_DATABASE) return;
         
         this.posGrid.innerHTML = '';
         
@@ -98,7 +98,6 @@ const Workstation = {
             this.posGrid.appendChild(btn);
         });
         
-        // Обработчики кнопок
         this.posGrid.querySelectorAll('.pos-btn-plus').forEach(btn => {
             btn.addEventListener('click', (e) => this.addToOrder(parseInt(e.target.dataset.index), 1));
         });
@@ -144,18 +143,30 @@ const Workstation = {
         if (this.orderItems) this.orderItems.innerHTML = itemsHtml;
         if (this.orderTotal) this.orderTotal.innerText = '$' + total.toLocaleString();
         
-        // Чек кухни
         this.renderKitchenTicket(indices);
+
+        // === 🔥 ДОБАВЛЕНА КНОПКА ОЧИСТКИ ЗАКАЗА 🔥 ===
+        let clearBtn = this.orderBlock.querySelector('.btn-clear-order');
+        if (!clearBtn) {
+            clearBtn = document.createElement('button');
+            clearBtn.className = 'btn-clear-order';
+            clearBtn.innerText = '🗑️ Очистить текущий заказ';
+            clearBtn.style.cssText = 'width: 100%; background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; margin-top: 15px; font-weight: bold; font-size: 14px;';
+            clearBtn.onclick = () => {
+                Store.set('currentOrder', {});
+                EventBus.emit('state:currentOrder:changed');
+            };
+            this.orderBlock.appendChild(clearBtn);
+        }
     },
     
     renderKitchenTicket(indices) {
         if (!this.kitchenTicket) return;
         
         const currentOrder = Store.get('currentOrder');
-        const prices = Store.get('calculatedPrices');
         
         let html = '<div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #f39c12; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);">';
-        html += '<div style="font-size: 20px; font-weight: bold; color: #d35400; margin-bottom: 15px; text-align: center;"> ЧЕК КУХНИ</div>';
+        html += '<div style="font-size: 20px; font-weight: bold; color: #d35400; margin-bottom: 15px; text-align: center;">🧾 ЧЕК КУХНИ</div>';
         
         indices.forEach(idxStr => {
             const idx = parseInt(idxStr);
@@ -167,10 +178,8 @@ const Workstation = {
             html += `<div style="font-size: 24px; font-weight: bold; color: #e67e22; background: #fff3cd; padding: 5px 15px; border-radius: 20px; min-width: 40px; text-align: center;">x${qty}</div>`;
             html += `</div>`;
         });
-        
         html += '</div>';
         
-        // Рецепты
         html += '<div style="background: #f8f9fa; border: 2px solid #8e44ad; border-radius: 8px; padding: 15px;">';
         html += '<div style="font-size: 18px; font-weight: bold; color: #8e44ad; margin-bottom: 15px; text-align: center;">📖 Рецепты для этого заказа</div>';
         
@@ -194,7 +203,6 @@ const Workstation = {
             }
             html += `</ol></div></div>`;
         });
-        
         html += '</div>';
         
         this.kitchenTicket.innerHTML = html;
@@ -237,7 +245,6 @@ const Workstation = {
         const indices = Object.keys(currentOrder);
         if (indices.length === 0) return;
         
-        // Проверяем доступность
         const prepStock = Store.get('prepStock');
         for (let idxStr of indices) {
             const idx = parseInt(idxStr);
@@ -245,13 +252,12 @@ const Workstation = {
             for (let comp in dish.recipe) {
                 const needed = dish.recipe[comp] * currentOrder[idx];
                 if (!prepStock.truck[comp] || prepStock.truck[comp] < needed) {
-                    alert(`❌ Недостаточно ${COMPONENT_NAMES[comp] || comp} для: ${dish.name}`);
+                    alert(`❌ Недостаточно: ${COMPONENT_NAMES[comp] || comp} для: ${dish.name}`);
                     return;
                 }
             }
         }
         
-        // Считаем деньги
         const prices = Store.get('calculatedPrices');
         const costs = Store.get('calculatedCosts');
         const shift = Store.get('shift');
@@ -273,7 +279,6 @@ const Workstation = {
         shift.orders += 1;
         Store.set('shift', shift);
         
-        // Уменьшаем остатки
         for (let idxStr of indices) {
             const idx = parseInt(idxStr);
             const dish = DISH_DATABASE[idx];
@@ -285,10 +290,8 @@ const Workstation = {
         }
         Store.set('prepStock', prepStock);
         
-        // Очищаем заказ
         Store.set('currentOrder', {});
         
-        // Уведомления
         this.showStockNotifications(prepStock);
         this.renderPOS();
         this.showCurrentStock();
@@ -391,14 +394,11 @@ const Workstation = {
         const logic = Store.get('businessLogic');
         const rawStock = Store.get('rawStock');
         const prepStock = Store.get('prepStock');
-        const selectedDishes = Store.get('selectedDishes');
         
-        // Очищаем
         prepStock.truck = {};
         prepStock.rvStorage = {};
         prepStock.rvCabinet = {};
         
-        // Распределяем сырьё
         const readyComponents = new Set();
         for (let item in prepStock.truck) {
             if (prepStock.truck[item] > 0) readyComponents.add(item);
@@ -460,7 +460,6 @@ const Workstation = {
         
         this.showModal('🔄 Догрузить в фудтрак', html);
         
-        // Обработчики
         setTimeout(() => {
             document.querySelectorAll('.restock-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -498,7 +497,7 @@ const Workstation = {
             html += `<span>${name} (сейчас: ${prepStock.truck[comp] || 0})</span>`;
             html += `<div style="display: flex; gap: 5px;">`;
             html += `<input type="number" id="prepare_${comp}" value="10" min="1" style="width: 60px; padding: 4px;">`;
-            html += `<button class="prepare-btn" data-comp="${comp}" style="background: #8e44ad; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">👨‍</button>`;
+            html += `<button class="prepare-btn" data-comp="${comp}" style="background: #8e44ad; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">👨‍🍳</button>`;
             html += `</div></div>`;
         });
         
@@ -531,7 +530,6 @@ const Workstation = {
         
         const prepStock = Store.get('prepStock');
         
-        // Проверяем наличие сырья
         for (let raw in recipe) {
             const needed = recipe[raw] * qty;
             const available = (prepStock.truck[raw] || 0) + (prepStock.rvCabinet[raw] || 0) + (prepStock.rvStorage[raw] || 0);
@@ -541,7 +539,6 @@ const Workstation = {
             }
         }
         
-        // Расходуем сырьё
         for (let raw in recipe) {
             let needed = recipe[raw] * qty;
             const sources = ['truck', 'rvCabinet', 'rvStorage'];
@@ -569,7 +566,6 @@ const Workstation = {
         let html = '<div style="max-height: 60vh; overflow-y: auto;">';
         html += '<p style="color: #7f8c8d; font-size: 14px;">Выберите что списать:</p>';
         
-        // Сырьё
         const rawItems = Object.keys(prepStock.truck).filter(k => BASE_INGREDIENTS.includes(k));
         if (rawItems.length > 0) {
             html += '<h4 style="margin: 15px 0 8px 0; color: #e74c3c;">🥩 Сырьё:</h4>';
@@ -586,7 +582,6 @@ const Workstation = {
             });
         }
         
-        // Заготовки
         const prepItems = Object.keys(prepStock.truck).filter(k => !BASE_INGREDIENTS.includes(k));
         if (prepItems.length > 0) {
             html += '<h4 style="margin: 15px 0 8px 0; color: #e67e22;">🍳 Заготовки:</h4>';
@@ -598,12 +593,11 @@ const Workstation = {
                 html += `<span>${COMPONENT_NAMES[comp]} (${qty} шт.) — $${price}/шт</span>`;
                 html += `<div style="display: flex; gap: 5px;">`;
                 html += `<input type="number" id="waste_${comp}" value="1" min="1" max="${qty}" style="width: 60px; padding: 4px;">`;
-                html += `<button class="waste-btn" data-comp="${comp}" data-price="${price}" style="background: #e74c3c; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">️</button>`;
+                html += `<button class="waste-btn" data-comp="${comp}" data-price="${price}" style="background: #e74c3c; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">🗑️</button>`;
                 html += `</div></div>`;
             });
         }
         
-        // Статистика
         if (waste.items.length > 0) {
             html += '<hr style="margin: 15px 0;">';
             html += '<h4 style="margin: 0 0 8px 0; color: #7f8c8d;">📊 Списание за смену:</h4>';
