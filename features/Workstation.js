@@ -1,108 +1,81 @@
-// ==================== РАБОЧАЯ СТАНЦИЯ (POS + РЕЦЕПТЫ + СКЛАД) ====================
+// ==================== РАБОЧАЯ СТАНЦИЯ ====================
 
 const Workstation = {
-    init() {
+    init: function() {
         this.cacheElements();
         this.bindEvents();
         this.loadFromStore();
     },
     
-    cacheElements() {
-    this.posGrid = document.getElementById('pos_menu_grid');
-    this.orderBlock = document.getElementById('pos_active_order_block');
-    this.orderItems = document.getElementById('pos_current_items');
-    this.orderTotal = document.getElementById('pos_current_total');
-    this.kitchenTicket = document.getElementById('pos_kitchen_ticket');
-    this.stockDisplay = document.getElementById('current_stock_display');
-    this.revenueEl = document.getElementById('pos_shift_revenue');
-    this.profitEl = document.getElementById('pos_shift_profit');
-    this.ordersEl = document.getElementById('pos_shift_orders');
-    
-    // Ищем кнопку по ID или по классу
-    this.completeBtn = document.getElementById('btn_complete_order') || 
-                       document.querySelector('.btn-complete') ||
-                       document.querySelector('[onclick*="complete"]');
-    this.resetBtn = document.querySelector('[onclick*="reset"]') ||
-                    document.getElementById('btn_reset_shift');
-    this.loadStockBtn = document.querySelector('[onclick*="initStock"]') ||
-                        document.getElementById('btn_load_stock');
-    this.restockBtn = document.querySelector('[onclick*="openRestock"]') ||
-                      document.getElementById('btn_restock');
-    this.prepareBtn = document.querySelector('[onclick*="openPrepare"]') ||
-                      document.getElementById('btn_prepare');
-    this.wasteBtn = document.querySelector('[onclick*="openWaste"]') ||
-                    document.getElementById('btn_waste');
-},
-    
-    bindEvents() {
-    var self = this;
-    
-    if (this.completeBtn) {
-        this.completeBtn.addEventListener('click', function() { self.completeOrder(); });
-    }
-    if (this.resetBtn) {
-        this.resetBtn.addEventListener('click', function() { self.resetShift(); });
-    }
-    if (this.loadStockBtn) {
-        this.loadStockBtn.addEventListener('click', function() { self.loadStockFromInventory(); });
-    }
-    if (this.restockBtn) {
-        this.restockBtn.addEventListener('click', function() { self.openRestockModal(); });
-    }
-    if (this.prepareBtn) {
-        this.prepareBtn.addEventListener('click', function() { self.openPrepareModal(); });
-    }
-    if (this.wasteBtn) {
-        this.wasteBtn.addEventListener('click', function() { self.openWasteModal(); });
-    }
-    
-    // 🔥 УНИВЕРСАЛЬНОЕ ДЕЛЕГИРОВАНИЕ НА DOCUMENT — работает всегда!
-    document.addEventListener('click', function(e) {
-        // Кнопка "+"
-        if (e.target.classList.contains('pos-btn-plus')) {
-            e.preventDefault();
-            e.stopPropagation();
-            var idx = parseInt(e.target.getAttribute('data-index'));
-            if (!isNaN(idx)) {
-                self.addToOrder(idx, 1);
-                self.renderPOS();
-                self.renderOrder();
-            }
-            return;
-        }
-        // Кнопка "-"
-        if (e.target.classList.contains('pos-btn-minus')) {
-            e.preventDefault();
-            e.stopPropagation();
-            var idx = parseInt(e.target.getAttribute('data-index'));
-            if (!isNaN(idx)) {
-                self.addToOrder(idx, -1);
-                self.renderPOS();
-                self.renderOrder();
-            }
-            return;
-        }
-    });
-    
-    EventBus.on('store:ready', function() { self.loadFromStore(); });
-    EventBus.on('state:currentOrder:changed', function() { self.renderOrder(); });
-    EventBus.on('state:shift:changed', function() { self.updateShiftDisplay(); });
-    EventBus.on('state:waste:changed', function() { self.updateShiftDisplay(); });
-},
+    cacheElements: function() {
+        this.posGrid = document.getElementById('pos_menu_grid');
+        this.orderBlock = document.getElementById('pos_active_order_block');
+        this.orderItems = document.getElementById('pos_current_items');
+        this.orderTotal = document.getElementById('pos_current_total');
+        this.kitchenTicket = document.getElementById('pos_kitchen_ticket');
+        this.stockDisplay = document.getElementById('current_stock_display');
+        this.revenueEl = document.getElementById('pos_shift_revenue');
+        this.profitEl = document.getElementById('pos_shift_profit');
+        this.ordersEl = document.getElementById('pos_shift_orders');
         
-        // 🔥 ДЕЛЕГИРОВАНИЕ СОБЫТИЙ: гарантированно ловит клики по + и - даже после перерисовки
-        if (this.posGrid) {
-            this.posGrid.addEventListener('click', function(e) {
-                if (e.target.classList.contains('pos-btn-plus')) {
-                    var idx = parseInt(e.target.getAttribute('data-index'));
+        this.completeBtn = document.getElementById('btn_complete_order') || 
+                           document.querySelector('.btn-complete') ||
+                           document.querySelector('[onclick*="complete"]');
+        this.resetBtn = document.querySelector('[onclick*="reset"]') ||
+                        document.getElementById('btn_reset_shift');
+        this.loadStockBtn = document.querySelector('[onclick*="initStock"]') ||
+                            document.getElementById('btn_load_stock');
+        this.restockBtn = document.querySelector('[onclick*="openRestock"]') ||
+                          document.getElementById('btn_restock');
+        this.prepareBtn = document.querySelector('[onclick*="openPrepare"]') ||
+                          document.getElementById('btn_prepare');
+        this.wasteBtn = document.querySelector('[onclick*="openWaste"]') ||
+                        document.getElementById('btn_waste');
+    },
+    
+    bindEvents: function() {
+        var self = this;
+        
+        if (this.completeBtn) {
+            this.completeBtn.addEventListener('click', function() { self.completeOrder(); });
+        }
+        if (this.resetBtn) {
+            this.resetBtn.addEventListener('click', function() { self.resetShift(); });
+        }
+        if (this.loadStockBtn) {
+            this.loadStockBtn.addEventListener('click', function() { self.loadStockFromInventory(); });
+        }
+        if (this.restockBtn) {
+            this.restockBtn.addEventListener('click', function() { self.openRestockModal(); });
+        }
+        if (this.prepareBtn) {
+            this.prepareBtn.addEventListener('click', function() { self.openPrepareModal(); });
+        }
+        if (this.wasteBtn) {
+            this.wasteBtn.addEventListener('click', function() { self.openWasteModal(); });
+        }
+        
+        // Делегирование на document
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('pos-btn-plus')) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(e.target.getAttribute('data-index'));
+                if (!isNaN(idx)) {
                     self.addToOrder(idx, 1);
                 }
-                if (e.target.classList.contains('pos-btn-minus')) {
-                    var idx = parseInt(e.target.getAttribute('data-index'));
+                return;
+            }
+            if (e.target.classList.contains('pos-btn-minus')) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(e.target.getAttribute('data-index'));
+                if (!isNaN(idx)) {
                     self.addToOrder(idx, -1);
                 }
-            });
-        }
+                return;
+            }
+        });
         
         EventBus.on('store:ready', function() { self.loadFromStore(); });
         EventBus.on('state:currentOrder:changed', function() { self.renderOrder(); });
@@ -110,14 +83,14 @@ const Workstation = {
         EventBus.on('state:waste:changed', function() { self.updateShiftDisplay(); });
     },
     
-    loadFromStore() {
+    loadFromStore: function() {
         this.renderPOS();
         this.renderOrder();
         this.updateShiftDisplay();
         this.showCurrentStock();
     },
     
-    renderPOS() {
+    renderPOS: function() {
         if (!this.posGrid || !window.DISH_DATABASE) return;
         
         this.posGrid.innerHTML = '';
@@ -154,17 +127,16 @@ const Workstation = {
         this.updatePOSAvailability();
     },
     
-    addToOrder(idx, change) {
-    var currentOrder = Store.get('currentOrder');
-    currentOrder[idx] = (currentOrder[idx] || 0) + change;
-    if (currentOrder[idx] <= 0) delete currentOrder[idx];
-    Store.set('currentOrder', currentOrder);
-    // Явный рендер после изменения
-    this.renderPOS();
-    this.renderOrder();
-},
+    addToOrder: function(idx, change) {
+        var currentOrder = Store.get('currentOrder');
+        currentOrder[idx] = (currentOrder[idx] || 0) + change;
+        if (currentOrder[idx] <= 0) delete currentOrder[idx];
+        Store.set('currentOrder', currentOrder);
+        this.renderPOS();
+        this.renderOrder();
+    },
     
-    renderOrder() {
+    renderOrder: function() {
         var currentOrder = Store.get('currentOrder');
         var indices = Object.keys(currentOrder);
         
@@ -194,7 +166,7 @@ const Workstation = {
         
         this.renderKitchenTicket(indices);
         
-        // Кнопка очистки заказа
+        // Кнопка очистки
         var existingClearBtn = this.orderBlock.querySelector('.btn-clear-order');
         if (existingClearBtn) existingClearBtn.remove();
         
@@ -209,11 +181,11 @@ const Workstation = {
         this.orderBlock.appendChild(clearBtn);
     },
     
-    renderKitchenTicket(indices) {
+    renderKitchenTicket: function(indices) {
         if (!this.kitchenTicket) return;
         
         var currentOrder = Store.get('currentOrder');
-        var html = '<div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #f39c12; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);">';
+        var html = '<div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #f39c12; border-radius: 8px; padding: 15px; margin-bottom: 15px;">';
         html += '<div style="font-size: 20px; font-weight: bold; color: #d35400; margin-bottom: 15px; text-align: center;">🧾 ЧЕК КУХНИ</div>';
         
         var self = this;
@@ -224,22 +196,21 @@ const Workstation = {
             
             html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; border-left: 4px solid #e67e22;">';
             html += '<div style="font-size: 18px; font-weight: bold; color: #2c3e50;">' + dish.name + '</div>';
-            html += '<div style="font-size: 24px; font-weight: bold; color: #e67e22; background: #fff3cd; padding: 5px 15px; border-radius: 20px; min-width: 40px; text-align: center;">x' + qty + '</div>';
+            html += '<div style="font-size: 24px; font-weight: bold; color: #e67e22; background: #fff3cd; padding: 5px 15px; border-radius: 20px;">x' + qty + '</div>';
             html += '</div>';
         });
         html += '</div>';
         
         html += '<div style="background: #f8f9fa; border: 2px solid #8e44ad; border-radius: 8px; padding: 15px;">';
-        html += '<div style="font-size: 18px; font-weight: bold; color: #8e44ad; margin-bottom: 15px; text-align: center;">📖 Рецепты для этого заказа</div>';
+        html += '<div style="font-size: 18px; font-weight: bold; color: #8e44ad; margin-bottom: 15px; text-align: center;">📖 Рецепты</div>';
         
         indices.forEach(function(idxStr) {
             var idx = parseInt(idxStr);
             var dish = DISH_DATABASE[idx];
             
-            html += '<div style="background: white; border-top: 4px solid #27ae60; border: 1px solid #e0e0e0; padding: 12px; margin-bottom: 12px; border-radius: 4px;">';
-            html += '<h4 style="margin: 0 0 8px 0; color: #2c3e50; font-size: 16px;">' + dish.name + '</h4>';
+            html += '<div style="background: white; border: 1px solid #e0e0e0; padding: 12px; margin-bottom: 12px; border-radius: 4px;">';
+            html += '<h4 style="margin: 0 0 8px 0; color: #2c3e50;">' + dish.name + '</h4>';
             html += '<div style="font-size: 12px; color: #7f8c8d; margin-bottom: 10px; font-style: italic;">' + dish.craft + '</div>';
-            html += '<div style="margin-left: 10px;">';
             html += '<strong style="color: #27ae60; font-size: 13px;">🧪 Компоненты:</strong>';
             html += '<ol style="margin: 8px 0; padding-left: 20px; line-height: 1.6; font-size: 14px;">';
             
@@ -250,14 +221,14 @@ const Workstation = {
                 html += self.renderComponentChain(component, qty);
                 html += '</li>';
             }
-            html += '</ol></div></div>';
+            html += '</ol></div>';
         });
         html += '</div>';
         
         this.kitchenTicket.innerHTML = html;
     },
     
-    renderComponentChain(component, qty) {
+    renderComponentChain: function(component, qty) {
         var recipe = CRAFT_RECIPES[component];
         if (!recipe) return '';
         
@@ -289,13 +260,12 @@ const Workstation = {
         return html;
     },
     
-    completeOrder() {
+    completeOrder: function() {
         var currentOrder = Store.get('currentOrder');
         var indices = Object.keys(currentOrder);
         if (indices.length === 0) return;
         
         var prepStock = Store.get('prepStock');
-        var self = this;
         var hasError = false;
         
         indices.forEach(function(idxStr) {
@@ -344,7 +314,6 @@ const Workstation = {
             }
         });
         Store.set('prepStock', prepStock);
-        
         Store.set('currentOrder', {});
         
         this.showStockNotifications(prepStock);
@@ -354,7 +323,7 @@ const Workstation = {
         alert('✅ Заказ проведён! Выручка: $' + revenue.toLocaleString());
     },
     
-    showStockNotifications(prepStock) {
+    showStockNotifications: function(prepStock) {
         var warnings = [];
         var critical = [];
         
@@ -390,9 +359,8 @@ const Workstation = {
         }
     },
     
-    updatePOSAvailability() {
+    updatePOSAvailability: function() {
         var prepStock = Store.get('prepStock');
-        var self = this;
         
         this.posGrid.querySelectorAll('.pos-item').forEach(function(item) {
             var idx = parseInt(item.getAttribute('data-index'));
@@ -412,7 +380,7 @@ const Workstation = {
         });
     },
     
-    showCurrentStock() {
+    showCurrentStock: function() {
         if (!this.stockDisplay) return;
         
         var prepStock = Store.get('prepStock');
@@ -437,7 +405,7 @@ const Workstation = {
         this.stockDisplay.innerHTML = html;
     },
     
-    updateShiftDisplay() {
+    updateShiftDisplay: function() {
         var shift = Store.get('shift');
         var waste = Store.get('waste');
         
@@ -446,7 +414,7 @@ const Workstation = {
         if (this.ordersEl) this.ordersEl.innerText = shift.orders;
     },
     
-    loadStockFromInventory() {
+    loadStockFromInventory: function() {
         var logic = Store.get('businessLogic');
         var rawStock = Store.get('rawStock');
         var prepStock = Store.get('prepStock');
@@ -455,16 +423,8 @@ const Workstation = {
         prepStock.rvStorage = {};
         prepStock.rvCabinet = {};
         
-        var readyComponents = new Set();
-        for (var item in prepStock.truck) {
-            if (prepStock.truck[item] > 0) readyComponents.add(item);
-        }
-        
-        var self = this;
         BASE_INGREDIENTS.forEach(function(id) {
             var val = rawStock[id] || 0;
-            if (readyComponents.has(id)) return;
-            
             if (logic === '1') {
                 prepStock.truck[id] = val;
             } else if (logic === '2') {
@@ -482,225 +442,19 @@ const Workstation = {
         alert('✅ Остатки загружены со склада!');
     },
     
-    openRestockModal() {
-        var prepStock = Store.get('prepStock');
-        var logic = Store.get('businessLogic');
-        var self = this;
-        
-        var html = '<div style="max-height: 60vh; overflow-y: auto;">';
-        html += '<p style="color: #7f8c8d; font-size: 14px;">Выберите компоненты для догрузки в фудтрак:</p>';
-        
-        var sources = [];
-        if (logic === '2' || logic === '3' || logic === '4') sources.push({ key: 'rvStorage', name: 'Багажник' });
-        if (logic === '3' || logic === '4') sources.push({ key: 'rvCabinet', name: 'Шкаф' });
-        
-        if (sources.length === 0) {
-            html += '<p style="color: #e74c3c;">Нет хранилищ для догрузки.</p>';
-        } else {
-            sources.forEach(function(src) {
-                var items = Object.keys(prepStock[src.key]).filter(function(k) { return prepStock[src.key][k] > 0; });
-                if (items.length === 0) return;
-                
-                html += '<h4 style="margin: 15px 0 8px 0; color: #2c3e50;">' + src.name + ':</h4>';
-                items.forEach(function(comp) {
-                    var name = COMPONENT_NAMES[comp] || comp;
-                    html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border-radius: 4px; margin-bottom: 5px;">';
-                    html += '<span>' + name + ' (' + prepStock[src.key][comp] + ' шт.)</span>';
-                    html += '<div style="display: flex; gap: 5px;">';
-                    html += '<input type="number" id="restock_' + src.key + '_' + comp + '" value="10" min="1" max="' + prepStock[src.key][comp] + '" style="width: 60px; padding: 4px;">';
-                    html += '<button class="restock-btn" data-comp="' + comp + '" data-source="' + src.key + '" style="background: #27ae60; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">+</button>';
-                    html += '</div></div>';
-                });
-            });
-        }
-        html += '</div>';
-        
-        this.showModal('🔄 Догрузить в фудтрак', html);
-        
-        setTimeout(function() {
-            document.querySelectorAll('.restock-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    var comp = btn.getAttribute('data-comp');
-                    var source = btn.getAttribute('data-source');
-                    var input = document.getElementById('restock_' + source + '_' + comp);
-                    var qty = parseInt(input.value) || 0;
-                    
-                    if (qty > 0 && prepStock[source][comp] >= qty) {
-                        prepStock[source][comp] -= qty;
-                        prepStock.truck[comp] = (prepStock.truck[comp] || 0) + qty;
-                        Store.set('prepStock', prepStock);
-                        self.showCurrentStock();
-                        self.renderPOS();
-                        self.openRestockModal();
-                        alert('✅ Догружено: ' + (COMPONENT_NAMES[comp] || comp) + ' x' + qty);
-                    }
-                });
-            });
-        }, 100);
+    openRestockModal: function() {
+        alert('Функция догрузки в разработке');
     },
     
-    openPrepareModal() {
-        var prepStock = Store.get('prepStock');
-        var self = this;
-        
-        var html = '<div style="max-height: 60vh; overflow-y: auto;">';
-        html += '<p style="color: #7f8c8d; font-size: 14px;">Выберите что приготовить:</p>';
-        
-        PREP_ITEMS.forEach(function(comp) {
-            var name = COMPONENT_NAMES[comp] || comp;
-            var recipe = PREP_RECIPES[comp];
-            if (!recipe) return;
-            
-            html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border-radius: 4px; margin-bottom: 5px;">';
-            html += '<span>' + name + ' (сейчас: ' + (prepStock.truck[comp] || 0) + ')</span>';
-            html += '<div style="display: flex; gap: 5px;">';
-            html += '<input type="number" id="prepare_' + comp + '" value="10" min="1" style="width: 60px; padding: 4px;">';
-            html += '<button class="prepare-btn" data-comp="' + comp + '" style="background: #8e44ad; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">👨‍🍳</button>';
-            html += '</div></div>';
-        });
-        html += '</div>';
-        
-        this.showModal('👨‍🍳 Приготовить заготовки', html);
-        
-        setTimeout(function() {
-            document.querySelectorAll('.prepare-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    var comp = btn.getAttribute('data-comp');
-                    var input = document.getElementById('prepare_' + comp);
-                    var qty = parseInt(input.value) || 0;
-                    
-                    if (qty > 0 && self.prepareComponent(comp, qty)) {
-                        alert('✅ Приготовлено: ' + (COMPONENT_NAMES[comp] || comp) + ' x' + qty);
-                        self.openPrepareModal();
-                    }
-                });
-            });
-        }, 100);
+    openPrepareModal: function() {
+        alert('Функция приготовления в разработке');
     },
     
-    prepareComponent(comp, qty) {
-        var recipe = PREP_RECIPES[comp];
-        if (!recipe) {
-            alert('Этот компонент нельзя приготовить!');
-            return false;
-        }
-        
-        var prepStock = Store.get('prepStock');
-        
-        for (var raw in recipe) {
-            var needed = recipe[raw] * qty;
-            var available = (prepStock.truck[raw] || 0) + (prepStock.rvCabinet[raw] || 0) + (prepStock.rvStorage[raw] || 0);
-            if (available < needed) {
-                alert('❌ Недостаточно ' + (COMPONENT_NAMES[raw] || raw) + '! Нужно: ' + needed + ', есть: ' + available);
-                return false;
-            }
-        }
-        
-        for (var raw in recipe) {
-            var needed = recipe[raw] * qty;
-            var sources = ['truck', 'rvCabinet', 'rvStorage'];
-            for (var i = 0; i < sources.length; i++) {
-                if (needed <= 0) break;
-                var src = sources[i];
-                var available = prepStock[src][raw] || 0;
-                var take = Math.min(available, needed);
-                prepStock[src][raw] -= take;
-                needed -= take;
-            }
-        }
-        
-        prepStock.truck[comp] = (prepStock.truck[comp] || 0) + qty;
-        Store.set('prepStock', prepStock);
-        this.showCurrentStock();
-        this.renderPOS();
-        
-        return true;
+    openWasteModal: function() {
+        alert('Функция списания в разработке');
     },
     
-    openWasteModal() {
-        var prepStock = Store.get('prepStock');
-        var waste = Store.get('waste');
-        var self = this;
-        
-        var html = '<div style="max-height: 60vh; overflow-y: auto;">';
-        html += '<p style="color: #7f8c8d; font-size: 14px;">Выберите что списать:</p>';
-        
-        var rawItems = Object.keys(prepStock.truck).filter(function(k) { return BASE_INGREDIENTS.indexOf(k) !== -1; });
-        if (rawItems.length > 0) {
-            html += '<h4 style="margin: 15px 0 8px 0; color: #e74c3c;">🥩 Сырьё:</h4>';
-            rawItems.forEach(function(comp) {
-                var qty = prepStock.truck[comp] || 0;
-                if (qty <= 0) return;
-                var price = RAW_PRICES[comp] || 0;
-                html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #fdf2f2; border-radius: 4px; margin-bottom: 5px;">';
-                html += '<span>' + (COMPONENT_NAMES[comp] || comp) + ' (' + qty + ' шт.) — $' + price + '/шт</span>';
-                html += '<div style="display: flex; gap: 5px;">';
-                html += '<input type="number" id="waste_' + comp + '" value="1" min="1" max="' + qty + '" style="width: 60px; padding: 4px;">';
-                html += '<button class="waste-btn" data-comp="' + comp + '" data-price="' + price + '" style="background: #e74c3c; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">🗑️</button>';
-                html += '</div></div>';
-            });
-        }
-        
-        var prepItems = Object.keys(prepStock.truck).filter(function(k) { return BASE_INGREDIENTS.indexOf(k) === -1; });
-        if (prepItems.length > 0) {
-            html += '<h4 style="margin: 15px 0 8px 0; color: #e67e22;">🍳 Заготовки:</h4>';
-            prepItems.forEach(function(comp) {
-                var qty = prepStock.truck[comp] || 0;
-                if (qty <= 0) return;
-                var price = PREP_PRICES[comp] || 0;
-                html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #fff3cd; border-radius: 4px; margin-bottom: 5px;">';
-                html += '<span>' + (COMPONENT_NAMES[comp] || comp) + ' (' + qty + ' шт.) — $' + price + '/шт</span>';
-                html += '<div style="display: flex; gap: 5px;">';
-                html += '<input type="number" id="waste_' + comp + '" value="1" min="1" max="' + qty + '" style="width: 60px; padding: 4px;">';
-                html += '<button class="waste-btn" data-comp="' + comp + '" data-price="' + price + '" style="background: #e74c3c; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">🗑️</button>';
-                html += '</div></div>';
-            });
-        }
-        
-        if (waste.items.length > 0) {
-            html += '<hr style="margin: 15px 0;">';
-            html += '<h4 style="margin: 0 0 8px 0; color: #7f8c8d;">📊 Списание за смену:</h4>';
-            html += '<div style="background: #f8f9fa; padding: 10px; border-radius: 4px;">';
-            waste.items.forEach(function(item) {
-                html += '<div style="font-size: 13px; margin-bottom: 3px;">• ' + item.name + ': ' + item.qty + ' шт. (' + item.time + ') — $' + item.cost + '</div>';
-            });
-            html += '<div style="font-weight: bold; margin-top: 8px; color: #e74c3c;">Итого убыток: $' + waste.total + '</div>';
-            html += '</div>';
-        }
-        html += '</div>';
-        
-        this.showModal('🗑️ Списать брак/отходы', html);
-        
-        setTimeout(function() {
-            document.querySelectorAll('.waste-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    var comp = btn.getAttribute('data-comp');
-                    var price = parseInt(btn.getAttribute('data-price'));
-                    var input = document.getElementById('waste_' + comp);
-                    var qty = parseInt(input.value) || 0;
-                    
-                    if (qty > 0 && prepStock.truck[comp] >= qty) {
-                        prepStock.truck[comp] -= qty;
-                        Store.set('prepStock', prepStock);
-                        
-                        var w = Store.get('waste');
-                        w.items.push({ name: COMPONENT_NAMES[comp] || comp, qty: qty, cost: qty * price, time: new Date().toLocaleTimeString() });
-                        w.total += qty * price;
-                        Store.set('waste', w);
-                        
-                        self.showCurrentStock();
-                        self.renderPOS();
-                        self.updateShiftDisplay();
-                        self.openWasteModal();
-                        
-                        alert('🗑️ Списано: ' + (COMPONENT_NAMES[comp] || comp) + ' x' + qty + ' (убыток: $' + (qty * price) + ')');
-                    }
-                });
-            });
-        }, 100);
-    },
-    
-    resetShift() {
+    resetShift: function() {
         if (!confirm('⚠️ Завершить смену и обнулить кассу?')) return;
         
         Store.set('shift', { revenue: 0, profit: 0, orders: 0 });
@@ -712,18 +466,6 @@ const Workstation = {
         this.renderOrder();
         
         alert('✅ Смена завершена!');
-    },
-    
-    showModal(title, content) {
-        var modal = document.getElementById('sync_modal');
-        var titleEl = document.getElementById('sync_modal_title');
-        var contentEl = document.getElementById('sync_modal_content');
-        
-        if (modal && titleEl && contentEl) {
-            titleEl.innerText = title;
-            contentEl.innerHTML = content;
-            modal.style.display = 'flex';
-        }
     }
 };
 
