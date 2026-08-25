@@ -945,3 +945,37 @@ completeCurrentOrder = function() {
     updatePOSAvailability();
     showCurrentStock();
 };
+// ==================== СИНХРОНИЗАЦИЯ СКЛАДА ====================
+function syncStockToInventory() {
+    const stock = getStockData();
+    const logic = document.getElementById("business_logic").value;
+    
+    // Базовое сырьё: суммируем все хранилища
+    const baseIngredients = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"];
+    
+    baseIngredients.forEach(id => {
+        const el = document.getElementById("stock_" + id);
+        if (!el) return;
+        
+        const truck = stock.truck[id] || 0;
+        const storage = stock.rv_storage[id] || 0;
+        const cabinet = stock.rv_cabinet[id] || 0;
+        const total = truck + storage + cabinet;
+        
+        el.value = total;
+    });
+    
+    // Заготовки: truck → в фудтрак, rv_storage → в автодом
+    document.querySelectorAll(".ready-input").forEach(el => {
+        let id = el.id.replace("ready_", "");
+        if (id.endsWith("_трак")) {
+            id = id.replace("_трак", "");
+            el.value = stock.truck[id] || 0;
+        } else if (id.endsWith("_авд")) {
+            id = id.replace("_авд", "");
+            el.value = stock.rv_storage[id] || 0;
+        }
+    });
+    
+    alert("✅ Склад синхронизирован со станцией!\nТеперь нажмите '💾 Сохранить остатки' чтобы зафиксировать.");
+}
