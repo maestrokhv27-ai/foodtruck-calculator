@@ -608,19 +608,59 @@ function initStockFromInventory() {
     stock.rv_storage = {};
     stock.rv_cabinet = {};
     
-    // Базовое сырьё (всегда покупается в магазине)
+    // Базовое сырьё (покупается в магазине)
     const baseIngredients = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"];
     
-    // Собираем все компоненты из выбранных блюд
-    const selectedComponents = new Set();
-    DISH_DATABASE.forEach((dish, idx) => {
-        const el = document.getElementById(`dish_${idx}`);
-        if (el && el.checked) {
-            for (let comp in dish.recipe) {
-                selectedComponents.add(comp);
-            }
+    // Собираем компоненты из таблицы ЗАГОТОВОК (то, что ввёл пользователь)
+    const readyComponents = new Set();
+    document.querySelectorAll(".ready-input").forEach(el => {
+        const val = parseInt(el.value) || 0;
+        if (val > 0) {
+            let id = el.id.replace("ready_", "").replace("_трак", "").replace("_авд", "");
+            readyComponents.add(id);
         }
     });
+    
+    // 1. Распределяем СЫРЬЁ из таблицы сырья (stock_...)
+    // НО только если этот компонент НЕ введён в таблице заготовок!
+    baseIngredients.forEach(id => {
+        const el = document.getElementById(`stock_${id}`);
+        if (!el) return;
+        const val = parseInt(el.value) || 0;
+        
+        // Если этот компонент есть в заготовках — не трогаем сырьё
+        if (readyComponents.has(id)) return;
+        
+        if (logic === "1") {
+            stock.truck[id] = val;
+        } else if (logic === "2") {
+            stock.rv_storage[id] = val;
+        } else if (logic === "3" || logic === "4") {
+            stock.rv_storage[id] = Math.floor(val / 2);
+            stock.rv_cabinet[id] = val - Math.floor(val / 2);
+        }
+    });
+    
+    // 2. Распределяем ЗАГОТОВКИ из таблицы (включая "овощи" если они там есть!)
+    document.querySelectorAll(".ready-input").forEach(el => {
+        const val = parseInt(el.value) || 0;
+        if (val === 0) return;
+        
+        let id = el.id.replace("ready_", "");
+        if (id.endsWith("_трак")) {
+            id = id.replace("_трак", "");
+            stock.truck[id] = (stock.truck[id] || 0) + val;
+        } else if (id.endsWith("_авд")) {
+            id = id.replace("_авд", "");
+            stock.rv_storage[id] = (stock.rv_storage[id] || 0) + val;
+        }
+    });
+    
+    saveStockData(stock);
+    showCurrentStock();
+    updatePOSAvailability();
+    return stock;
+}
     
     // Определяем, что является заготовкой (есть в COMPONENT_NAMES и не в baseIngredients)
     const prepIds = Object.keys(COMPONENT_NAMES).filter(id => !baseIngredients.includes(id));
