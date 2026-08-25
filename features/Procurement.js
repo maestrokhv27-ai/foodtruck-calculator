@@ -60,9 +60,9 @@ const Procurement = {
         let truckLoad = {};
         let totalRevenue = 0;
         let totalCost = 0;
-        let pricesHtml = '<strong>📋 ЦЕННИКИ ДЛЯ ВИТРИНЫ ФУДТРАКА:</strong><ul style="list-style-type:none;padding-left:0;">';
+        let sHtml = '<strong>📋 ЦЕННИКИ ДЛЯ ВИТРИНЫ ФУДТРАКА:</strong><ul style="list-style-type:none;padding-left:0;">';
         
-        const prices = { ...RAW_PRICES, "рыба": fishPrice };
+        const s = { ...RAW_S, "рыба": fishPrice };
         
         // Вспомогательная функция: проверяет, нужно ли сырьё только для заготовок
         const isOnlyForPrep = (dish, ingredient) => {
@@ -108,7 +108,7 @@ const Procurement = {
                 else if (PREP_PRICES[comp]) cost += qtyPerServing * PREP_PRICES[comp];
             }
             
-            const price = Math.round(cost * (1 + margin / 100));
+            const price = Math.round(cost * (1 + margin / 100) / 5) * 5;
             totalCost += servingsPerDish * cost;
             totalRevenue += servingsPerDish * price;
             
