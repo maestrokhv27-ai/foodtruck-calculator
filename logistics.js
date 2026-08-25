@@ -39,7 +39,6 @@ function calculateLogisticsCore() {
         for (let k in dish.recipe) totalComponentsPerServing += dish.recipe[k];
     });
 
-    // Лимит транспорта для закупки
     let r = (l === "1") ? t : (l === "4" ? e : c);
     let n = (l === "3" || l === "4") ? e : t;
     let i = Math.floor(n / 0.2);
@@ -48,9 +47,9 @@ function calculateLogisticsCore() {
     let p = Math.floor(d / totalComponentsPerServing);
 
     const pr = { 
-    "овощи": 55, "рис": 45, "мясо": 500, "фрукты": 55, 
-    "сахар": 45, "мука": 45, "молоко": 55, "яйцо": 45, "рыба": o,
-    "лёд": 45, "пиво": 60, "вино": 350
+        "овощи": 55, "рис": 45, "мясо": 500, "фрукты": 55, 
+        "сахар": 45, "мука": 45, "молоко": 55, "яйцо": 45, "рыба": o,
+        "лёд": 45, "пиво": 60, "вино": 350
     };
     
     let rawR = { "овощи": 0, "рис": 0, "мясо": 0, "фрукты": 0, "сахар": 0, "мука": 0, "молоко": 0, "яйцо": 0, "рыба": 0, "лёд": 0, "пиво": 0, "вино": 0 };
@@ -58,7 +57,7 @@ function calculateLogisticsCore() {
     let trk = {};
     let rev = 0;
     let cog = 0;
-    let htmlPrices = "<strong>📋 ЦЕННИКИ ДЛЯ ВИТРИНЫ ФУДТРАКА:</strong><ul style='list-style-type:none;padding-left:0;'>";
+    let htmlPrices = "<strong> ЦЕННИКИ ДЛЯ ВИТРИНЫ ФУДТРАКА:</strong><ul style='list-style-type:none;padding-left:0;'>";
 
     s.forEach(dish => {
         let f = { "овощи": 0, "рис": 0, "мясо": 0, "фрукты": 0, "сахар": 0, "мука": 0, "молоко": 0, "яйцо": 0, "рыба": 0, "масло": 0, "тесто": 0 };
@@ -86,9 +85,9 @@ function calculateLogisticsCore() {
         for (let rKey in f) {
             if (f[rKey] === 0) continue;
             if (rKey === "масло") {
-                cp += f[rKey] * pr["молоко"]; // Масло делается из молока (55$)
+                cp += f[rKey] * pr["молоко"];
             } else if (rKey === "тесто") {
-                cp += f[rKey] * (pr["мука"] + pr["яйцо"]); // Тесто = мука(45) + яйцо(45) = 90$
+                cp += f[rKey] * (pr["мука"] + pr["яйцо"]);
             } else {
                 if (pr[rKey]) cp += f[rKey] * pr[rKey];
             }
@@ -102,7 +101,7 @@ function calculateLogisticsCore() {
         lastCalculatedPrices[originalIdx] = sp;
         lastCalculatedCosts[originalIdx] = cp;
         
-        htmlPrices += `<li style='margin-bottom:8px;padding:8px;background:#fff;border-radius:4px;border-left:4px solid #2980b9;'>💵 <b>${dish.name}</b>  Цена: <strong style="color:#2980b9;">$${sp}</strong> <small>(себес: $${cp})</small> | Смена: <b>${g} порц.</b></li>`;
+        htmlPrices += `<li style='margin-bottom:8px;padding:8px;background:#fff;border-radius:4px;border-left:4px solid #2980b9;'>💵 <b>${dish.name}</b> ➜ Цена: <strong style="color:#2980b9;">$${sp}</strong> <small>(себес: $${cp})</small> | Смена: <b>${g} порц.</b></li>`;
     });
     htmlPrices += "</ul>";
 
@@ -117,37 +116,32 @@ function calculateLogisticsCore() {
         let qty = req[k];
         if (qty <= 0) continue;
         
-        // Базовые заготовки сразу разбиваем на сырьё
         if (k === "вареный_рис") rawR["рис"] += qty;
         if (k === "мясной_фарш") rawR["мясо"] += qty;
         if (k === "рыбный_фарш") rawR["рыба"] += qty;
         if (k === "сыр") rawR["молоко"] += qty;
         
-        // Хлеб и макароны делаем из муки и яиц (тесто НЕ закупаем!)
         if (k === "хлеб" || k === "макароны") {
             rawR["мука"] = (rawR["мука"] || 0) + qty;
             rawR["яйцо"] = (rawR["яйцо"] || 0) + qty;
         }
         
-        // Стейк и рыба с соусом
         if (k === "стейк_заг") { rawR["мясо"] += qty; rawR["фрукты"] += qty; rawR["сахар"] += qty; }
         if (k === "рыба_фрукт_заг") { rawR["рыба"] += qty; rawR["фрукты"] += qty; rawR["сахар"] += qty; }
         
-        // Пюре и котлеты требуют масло, а масло мы делаем из молока!
         if (k === "картофельное_пюре") {
             rawR["овощи"] += qty;
-            rawR["молоко"] += qty * 2; // 1 молоко для пюре + 1 молоко вместо масла
+            rawR["молоко"] += qty * 2;
         }
         if (k === "котлета") {
             rawR["мясо"] += qty;
-            rawR["молоко"] += qty; // вместо масла
+            rawR["молоко"] += qty;
         }
         if (k === "рыбная_котлета") {
             rawR["рыба"] += qty;
-            rawR["молоко"] += qty; // вместо масла
+            rawR["молоко"] += qty;
         }
         
-        // Карамель и мороженое
         if (k === "карамель") rawR["сахар"] += qty;
         if (k === "мороженое") {
             rawR["молоко"] += qty * 2;
@@ -155,7 +149,6 @@ function calculateLogisticsCore() {
             rawR["яйцо"] += qty;
         }
         
-        // Новое сырьё (если вдруг запросилось напрямую)
         if (k === "лёд") rawR["лёд"] += qty;
         if (k === "пиво") rawR["пиво"] += qty;
         if (k === "вино") rawR["вино"] += qty;
@@ -192,14 +185,14 @@ function calculateLogisticsCore() {
     if (noCalcMsg) noCalcMsg.style.display = "none";
 
     let inf = `<p>Выбранных позиций: <strong>${s.length}</strong>. На позицию: <strong>${g} порц.</strong> (заготовок на порцию: ${totalComponentsPerServing})</p>`;
-    inf += `<p>🏪 Бюджет на оптовую базу: <b>$${bc.toLocaleString()}</b> | 🎣 Наличка на скупку рыбы: <b style="color:#e67e22;">$${fc.toLocaleString()}</b></p>`;
+    inf += `<p> Бюджет на оптовую базу: <b>$${bc.toLocaleString()}</b> | 🎣 Наличка на скупку рыбы: <b style="color:#e67e22;">$${fc.toLocaleString()}</b></p>`;
     inf += `<p><strong>🔥 ОБЩИЙ РАСХОД:</strong> <span style="color:#2980b9;font-weight:bold;">$${(bc + fc).toLocaleString()}</span></p>${hasDef ? htmlShop : "<p>✅ ЗАПАСОВ СЫРЬЯ ХВАТАЕТ!</p>"}`;
     
     const shoppingList = getEl("res_shopping_list");
     if (shoppingList) shoppingList.innerHTML = inf;
 
     let trips = Math.ceil(w / r);
-    let tHtml = `<p>️ Вес сырья для закупки: <strong>${w.toFixed(1)} кг</strong> (Лимит транспорта: ${r} кг).</p>`;
+    let tHtml = `<p>⚖️ Вес сырья для закупки: <strong>${w.toFixed(1)} кг</strong> (Лимит транспорта: ${r} кг).</p>`;
     
     if (l === "1" && w > r) {
         if (errorBox) {
@@ -240,7 +233,7 @@ function calculateLogisticsCore() {
     let truckLimit = t;
     let tripsToTruck = Math.ceil(totalPrepWeight / truckLimit);
     
-    lHtml += `<p style="background: #e8f4f8; padding: 10px; border-radius: 4px; margin: 10px 0;"><strong>⚖️ Общий вес заготовок: ${totalPrepWeight.toFixed(1)} кг</strong> (Лимит: ${truckLimit} кг)`;
+    lHtml += `<p style="background: #e8f4f8; padding: 10px; border-radius: 4px; margin: 10px 0;"><strong>️ Общий вес заготовок: ${totalPrepWeight.toFixed(1)} кг</strong> (Лимит: ${truckLimit} кг)`;
     if (totalPrepWeight > truckLimit) {
         lHtml += `<br><span style="color: #e67e22;">⚠️ Потребуется ${tripsToTruck} рейса(ов)</span>`;
     } else {
@@ -274,7 +267,6 @@ function calculateLogisticsCore() {
 
 // ==================== ЦЕПОЧКА ПРИГОТОВЛЕНИЯ ====================
 function showFullRecipeChain() {
-    console.log("showFullRecipeChain вызвана");
     const selectedDishes = [];
     DISH_DATABASE.forEach((dish, idx) => {
         const el = document.getElementById(`dish_${idx}`);
@@ -288,10 +280,7 @@ function showFullRecipeChain() {
 
     const box = document.getElementById("recipe_chain_box");
     const content = document.getElementById("recipe_chain_content");
-    if (!box || !content) {
-        console.error("Блоки рецептов не найдены!");
-        return;
-    }
+    if (!box || !content) return;
     
     let html = "";
     selectedDishes.forEach((dish) => {
@@ -299,7 +288,7 @@ function showFullRecipeChain() {
         html += `<h4>${dish.name}</h4>`;
         html += `<div style="font-size: 13px; color: #7f8c8d; margin-bottom: 15px; font-style: italic;">${dish.craft}</div>`;
         html += `<div style="margin-left: 10px;">`;
-        html += `<strong style="color: #27ae60;">🧪 Компоненты:</strong>`;
+        html += `<strong style="color: #27ae60;"> Компоненты:</strong>`;
         html += `<ol style="margin: 10px 0; padding-left: 25px; line-height: 1.8;">`;
         
         for (let component in dish.recipe) {
@@ -359,7 +348,7 @@ function showComponentChain(component, qty, level) {
         }
         
         if (subComponents.инструменты) {
-            const toolIcons = { "нож": "🔪", "венчик": "", "огонь": "🔥" };
+            const toolIcons = { "нож": "🔪", "венчик": "🥄", "огонь": "🔥" };
             const toolsHtml = subComponents.инструменты.map(t => {
                 const icon = toolIcons[t.toLowerCase()] || '🔧';
                 return `<span style="display: inline-flex; align-items: center; margin: 2px 5px; padding: 3px 8px; background: #fff3cd; border-radius: 4px; font-size: 14px;">${icon} ${t}</span>`;
@@ -448,7 +437,6 @@ function renderActiveOrder() {
     if (itemsDiv) itemsDiv.innerHTML = itemsHtml;
     if (totalEl) totalEl.innerText = "$" + currentTotal.toLocaleString();
 
-    // ЧЕК КУХНИ
     let ticketHtml = '<div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #f39c12; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);">';
     ticketHtml += '<div style="font-size: 20px; font-weight: bold; color: #d35400; margin-bottom: 15px; text-align: center;">🍳 ЧЕК КУХНИ</div>';
     
@@ -465,7 +453,6 @@ function renderActiveOrder() {
     
     ticketHtml += '</div>';
 
-    // РЕЦЕПТЫ ТОЛЬКО ДЛЯ БЛЮД ИЗ ЧЕКА
     ticketHtml += '<div style="background: #f8f9fa; border: 2px solid #8e44ad; border-radius: 8px; padding: 15px;">';
     ticketHtml += '<div style="font-size: 18px; font-weight: bold; color: #8e44ad; margin-bottom: 15px; text-align: center;">📖 Рецепты для этого заказа</div>';
     
@@ -545,12 +532,12 @@ function updateShiftReport() {
     html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Заказов:</span><strong>${shiftStats.orders}</strong></div>`;
     html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Выручка:</span><strong>$${shiftStats.revenue.toLocaleString()}</strong></div>`;
     html += `<hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">`;
-    html += `<div style="display: flex; justify-content: space-between; font-size: 20px;"><span> Прибыль:</span><strong>$${shiftStats.profit.toLocaleString()}</strong></div></div>`;
+    html += `<div style="display: flex; justify-content: space-between; font-size: 20px;"><span>💰 Прибыль:</span><strong>$${shiftStats.profit.toLocaleString()}</strong></div></div>`;
     reportContent.innerHTML = html;
 }
 
 function resetShiftData() {
-    if (!confirm("️ Завершить смену и обнулить кассу?")) return;
+    if (!confirm("⚠️ Завершить смену и обнулить кассу?")) return;
     shiftStats = { revenue: 0, profit: 0, orders: 0 };
     currentOrder = {};
     localStorage.setItem("shift_stats", JSON.stringify(shiftStats));
@@ -566,7 +553,7 @@ function exportShiftReport() {
         return;
     }
     const date = new Date().toLocaleString("ru-RU");
-    let text = `📊 ОТЧЁТ ПО СМЕНЕ\n📅 Дата: ${date}\n━━━━━━━━━━━━━━━━━━━━\n`;
+    let text = ` ОТЧЁТ ПО СМЕНЕ\n📅 Дата: ${date}\n━━━━━━━━━━━━━━━━━━━━\n`;
     text += `Заказов: ${shiftStats.orders}\nВыручка: $${shiftStats.revenue.toLocaleString()}\n`;
     text += `💰 ПРИБЫЛЬ: $${shiftStats.profit.toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━\n`;
     
@@ -585,9 +572,9 @@ function exportShiftReport() {
         modal.style.display = "flex";
     }
 }
-// ==================== УЧЁТ ОСТАТКОВ В РЕАЛЬНОМ ВРЕМЕНИ ====================
 
-// Структура: { truck: {...}, rv_storage: {...}, rv_cabinet: {...} }
+// ==================== УЧЁТ ОСТАТКОВ ====================
+
 function getStockData() {
     const saved = localStorage.getItem("stock_data");
     if (saved) return JSON.parse(saved);
@@ -598,7 +585,6 @@ function saveStockData(data) {
     localStorage.setItem("stock_data", JSON.stringify(data));
 }
 
-// Инициализация остатков из вкладки "Склад"
 function initStockFromInventory() {
     const logic = document.getElementById("business_logic").value;
     const stock = getStockData();
@@ -653,73 +639,7 @@ function initStockFromInventory() {
     updatePOSAvailability();
     return stock;
 }
-    
-    // 2. Распределяем ЗАГОТОВКИ из таблицы (включая "овощи" если они там есть!)
-    document.querySelectorAll(".ready-input").forEach(el => {
-        const val = parseInt(el.value) || 0;
-        if (val === 0) return;
-        
-        let id = el.id.replace("ready_", "");
-        if (id.endsWith("_трак")) {
-            id = id.replace("_трак", "");
-            stock.truck[id] = (stock.truck[id] || 0) + val;
-        } else if (id.endsWith("_авд")) {
-            id = id.replace("_авд", "");
-            stock.rv_storage[id] = (stock.rv_storage[id] || 0) + val;
-        }
-    });
-    
-    saveStockData(stock);
-    showCurrentStock();
-    updatePOSAvailability();
-    return stock;
-}
-    
-    // Определяем, что является заготовкой (есть в COMPONENT_NAMES и не в baseIngredients)
-    const prepIds = Object.keys(COMPONENT_NAMES).filter(id => !baseIngredients.includes(id));
-    
-    // 1. Распределяем СЫРЬЁ
-    baseIngredients.forEach(id => {
-        const el = document.getElementById(`stock_${id}`);
-        if (!el) return;
-        const val = parseInt(el.value) || 0;
-        
-        if (logic === "1") {
-            stock.truck[id] = val;
-        } else if (logic === "2") {
-            stock.rv_storage[id] = val;
-        } else if (logic === "3" || logic === "4") {
-            stock.rv_storage[id] = Math.floor(val / 2);
-            stock.rv_cabinet[id] = val - Math.floor(val / 2);
-        }
-    });
-    
-    // 2. Распределяем ЗАГОТОВКИ из таблицы
-    document.querySelectorAll(".ready-input").forEach(el => {
-        const val = parseInt(el.value) || 0;
-        if (val === 0) return;
-        
-        let id = el.id.replace("ready_", "");
-        if (id.endsWith("_трак")) {
-            id = id.replace("_трак", "");
-            if (prepIds.includes(id)) {
-                stock.truck[id] = (stock.truck[id] || 0) + val;
-            }
-        } else if (id.endsWith("_авд")) {
-            id = id.replace("_авд", "");
-            if (prepIds.includes(id)) {
-                stock.rv_storage[id] = (stock.rv_storage[id] || 0) + val;
-            }
-        }
-    });
-    
-    saveStockData(stock);
-    showCurrentStock();
-    updatePOSAvailability();
-    return stock;
-}
 
-// Уменьшить остатки при продаже
 function consumeStock(order) {
     const stock = getStockData();
     const warnings = [];
@@ -749,7 +669,6 @@ function consumeStock(order) {
     return { warnings: [...new Set(warnings)], critical: [...new Set(critical)] };
 }
 
-// Проверить доступность блюда
 function isDishAvailable(dish) {
     const stock = getStockData();
     for (let comp in dish.recipe) {
@@ -759,22 +678,21 @@ function isDishAvailable(dish) {
     return true;
 }
 
-// Показать уведомления об остатках
 function showStockNotifications(result) {
     if (result.warnings.length === 0 && result.critical.length === 0) return;
     
     let html = '<div style="background: #fff3cd; border-left: 4px solid #f39c12; padding: 12px; border-radius: 6px; margin-top: 15px;">';
-    html += '<strong style="color: #d35400;">️ Внимание к остаткам:</strong><ul style="margin: 8px 0 0 20px; padding: 0;">';
+    html += '<strong style="color: #d35400;">⚠️ Внимание к остаткам:</strong><ul style="margin: 8px 0 0 20px; padding: 0;">';
     
     result.critical.forEach(comp => {
         const name = COMPONENT_NAMES[comp] || comp;
-        html += `<li style="color: #e74c3c; font-weight: bold;"> ${name} закончился! Блюда с ним недоступны.</li>`;
+        html += `<li style="color: #e74c3c; font-weight: bold;">🔴 ${name} закончился! Блюда с ним недоступны.</li>`;
     });
     
     result.warnings.forEach(comp => {
         const name = COMPONENT_NAMES[comp] || comp;
         const stock = getStockData();
-        html += `<li style="color: #e67e22;">⚠️ ${name}: осталось ${stock.truck[comp]} шт. Догрузите или приготовьте.</li>`;
+        html += `<li style="color: #e67e22;">️ ${name}: осталось ${stock.truck[comp]} шт. Догрузите или приготовьте.</li>`;
     });
     
     html += '</ul></div>';
@@ -790,7 +708,6 @@ function showStockNotifications(result) {
     }
 }
 
-// Обновить POS-кнопки (заблокировать недоступные)
 function updatePOSAvailability() {
     const stock = getStockData();
     DISH_DATABASE.forEach((dish, idx) => {
@@ -811,7 +728,6 @@ function updatePOSAvailability() {
     });
 }
 
-// Догрузить из хранилища
 function restockFromStorage(component, qty, from) {
     const stock = getStockData();
     const source = from === "storage" ? "rv_storage" : "rv_cabinet";
@@ -831,7 +747,6 @@ function restockFromStorage(component, qty, from) {
     return true;
 }
 
-// Приготовить заготовки
 function prepareComponent(component, qty) {
     const stock = getStockData();
     const recipes = {
@@ -858,7 +773,6 @@ function prepareComponent(component, qty) {
         return false;
     }
     
-    // Проверяем наличие сырья
     for (let raw in recipe) {
         const needed = recipe[raw] * qty;
         const available = (stock.truck[raw] || 0) + (stock.rv_cabinet[raw] || 0) + (stock.rv_storage[raw] || 0);
@@ -868,7 +782,6 @@ function prepareComponent(component, qty) {
         }
     }
     
-    // Расходуем сырьё (сначала из truck, потом из cabinet, потом storage)
     for (let raw in recipe) {
         let needed = recipe[raw] * qty;
         const sources = ["truck", "rv_cabinet", "rv_storage"];
@@ -881,7 +794,6 @@ function prepareComponent(component, qty) {
         }
     }
     
-    // Добавляем готовое в truck
     if (!stock.truck[component]) stock.truck[component] = 0;
     stock.truck[component] += qty;
     
@@ -891,13 +803,11 @@ function prepareComponent(component, qty) {
     return true;
 }
 
-// Показать текущие остатки в фудтраке
 function showCurrentStock() {
     const stock = getStockData();
     const container = document.getElementById("current_stock_display");
     if (!container) return;
     
-    // Проверяем что объект существует
     if (!stock.truck || typeof stock.truck !== 'object') {
         stock.truck = {};
     }
@@ -922,7 +832,6 @@ function showCurrentStock() {
     container.innerHTML = html;
 }
 
-// Модальное окно догрузки
 function openRestockModal() {
     const stock = getStockData();
     const logic = document.getElementById("business_logic").value;
@@ -938,7 +847,6 @@ function openRestockModal() {
         html += '<p style="color: #e74c3c;">Нет хранилищ для догрузки (режим "Только фудтрак").</p>';
     } else {
         sources.forEach(src => {
-            // Проверяем что объект существует
             if (!stock[src.key] || typeof stock[src.key] !== 'object') {
                 stock[src.key] = {};
             }
@@ -975,11 +883,10 @@ function doRestock(comp, sourceKey) {
     if (restockFromStorage(comp, qty, sourceKey)) {
         const name = COMPONENT_NAMES[comp] || comp;
         alert(`✅ Догружено: ${name} x${qty}`);
-        openRestockModal(); // Обновить модалку
+        openRestockModal();
     }
 }
 
-// Модальное окно приготовления
 function openPrepareModal() {
     const stock = getStockData();
     const prepareList = ["овощи", "вареный_рис", "картофельное_пюре", "мясной_фарш", "рыбный_фарш", "хлеб", "макароны", "сыр", "котлета", "рыбная_котлета", "стейк_заг", "рыба_фрукт_заг", "масло", "тесто", "карамель"];
@@ -993,7 +900,7 @@ function openPrepareModal() {
         html += `<span>${name} (сейчас: ${stock.truck[comp] || 0})</span>`;
         html += `<div style="display: flex; gap: 5px;">`;
         html += `<input type="number" id="prepare_${comp}" value="10" min="1" style="width: 60px; padding: 4px;">`;
-        html += `<button onclick="doPrepare('${comp}')" style="background: #8e44ad; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">👨‍🍳</button>`;
+        html += `<button onclick="doPrepare('${comp}')" style="background: #8e44ad; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">👨‍</button>`;
         html += `</div></div>`;
     });
     
@@ -1017,13 +924,11 @@ function doPrepare(comp) {
     }
 }
 
-// Модифицируем completeCurrentOrder для учёта остатков
 const originalCompleteOrder = completeCurrentOrder;
 completeCurrentOrder = function() {
     const indices = Object.keys(currentOrder);
     if (indices.length === 0) return;
     
-    // Проверяем доступность перед проведением
     for (let idxStr of indices) {
         const idx = parseInt(idxStr);
         const dish = DISH_DATABASE[idx];
@@ -1033,18 +938,10 @@ completeCurrentOrder = function() {
         }
     }
     
-    // Вызываем оригинальную функцию (деньги, статистика)
     originalCompleteOrder();
     
-    // Уменьшаем остатки
     const result = consumeStock(currentOrder);
-    
-    // Показываем уведомления
     showStockNotifications(result);
-    
-    // Обновляем доступность кнопок
     updatePOSAvailability();
-    
-    // Обновляем отображение остатков
     showCurrentStock();
 };
