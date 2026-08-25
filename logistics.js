@@ -10,12 +10,6 @@ if (typeof DISH_DATABASE === 'undefined') {
     console.error('⚠️ DISH_DATABASE не загружена! Проверьте что menu_database.js загружен перед logistics.js');
     var DISH_DATABASE = [];
 }
-if (typeof COMPONENT_NAMES === 'undefined') {
-    var COMPONENT_NAMES = {};
-}
-if (typeof CATEGORY_NAMES === 'undefined') {
-    var CATEGORY_NAMES = {};
-}
 
 // ==================== ОСНОВНОЙ РАСЧЁТ ====================
 function calculateLogisticsCore() {
@@ -75,7 +69,7 @@ function calculateLogisticsCore() {
     let trk = {};
     let rev = 0;
     let cog = 0;
-    let htmlPrices = "<strong>📋 ЦЕННИКИ ДЛЯ ВИТРИНЫ ФУДТРАКА:</strong><ul style='list-style-type:none;padding-left:0;'>";
+    let htmlPrices = "<strong> ЦЕННИКИ ДЛЯ ВИТРИНЫ ФУДТРАКА:</strong><ul style='list-style-type:none;padding-left:0;'>";
 
     s.forEach(dish => {
         let f = { "овощи": 0, "рис": 0, "мясо": 0, "фрукты": 0, "сахар": 0, "мука": 0, "молоко": 0, "яйцо": 0, "рыба": 0, "масло": 0, "тесто": 0 };
@@ -210,17 +204,17 @@ function calculateLogisticsCore() {
     if (shoppingList) shoppingList.innerHTML = inf;
 
     let trips = Math.ceil(w / r);
-    let tHtml = `<p>️ Вес сырья для закупки: <strong>${w.toFixed(1)} кг</strong> (Лимит транспорта: ${r} кг).</p>`;
+    let tHtml = `<p>⚖️ Вес сырья для закупки: <strong>${w.toFixed(1)} кг</strong> (Лимит транспорта: ${r} кг).</p>`;
     
     if (l === "1" && w > r) {
         if (errorBox) {
             errorBox.style.display = "block";
-            errorBox.innerHTML = "⚠️ ПЕРЕГРУЗ! Вес закупки превышает лимит.";
+            errorBox.innerHTML = "️ ПЕРЕГРУЗ! Вес закупки превышает лимит.";
         }
         if (resultBox) resultBox.style.display = "none";
         return;
     } else if (w > r) {
-        tHtml += `<p style="color:#c0392b;font-weight:bold;">⚠️ Потребуется: ${trips} рейса(ов).</p>`;
+        tHtml += `<p style="color:#c0392b;font-weight:bold;">️ Потребуется: ${trips} рейса(ов).</p>`;
     } else if (w > 0) {
         tHtml += `<p style="color:#27ae60;font-weight:bold;">✅ Доставится за 1 рейс!</p>`;
     }
@@ -311,7 +305,7 @@ function showFullRecipeChain() {
         html += `<h4>${dish.name}</h4>`;
         html += `<div style="font-size: 13px; color: #7f8c8d; margin-bottom: 15px; font-style: italic;">${dish.craft}</div>`;
         html += `<div style="margin-left: 10px;">`;
-        html += `<strong style="color: #27ae60;">🧪 Компоненты:</strong>`;
+        html += `<strong style="color: #27ae60;"> Компоненты:</strong>`;
         html += `<ol style="margin: 10px 0; padding-left: 25px; line-height: 1.8;">`;
         
         for (let component in dish.recipe) {
@@ -585,7 +579,7 @@ function exportShiftReport() {
         return;
     }
     const date = new Date().toLocaleString("ru-RU");
-    let text = `📊 ОТЧЁТ ПО СМЕНЕ\n📅 Дата: ${date}\n━━━━━━━━━━━━━━━━━━━━\n`;
+    let text = ` ОТЧЁТ ПО СМЕНЕ\n Дата: ${date}\n━━━━━━━━━━━━━━━━━━━━\n`;
     text += `Заказов: ${shiftStats.orders}\nВыручка: $${shiftStats.revenue.toLocaleString()}\n`;
     text += `💰 ПРИБЫЛЬ: $${shiftStats.profit.toLocaleString()}\n`;
     
@@ -946,7 +940,7 @@ function openPrepareModal() {
         html += `<span>${name} (сейчас: ${stock.truck[comp] || 0})</span>`;
         html += `<div style="display: flex; gap: 5px;">`;
         html += `<input type="number" id="prepare_${comp}" value="10" min="1" style="width: 60px; padding: 4px;">`;
-        html += `<button onclick="doPrepare('${comp}')" style="background: #8e44ad; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">‍🍳</button>`;
+        html += `<button onclick="doPrepare('${comp}')" style="background: #8e44ad; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">👨‍</button>`;
         html += `</div></div>`;
     });
     
@@ -1021,7 +1015,7 @@ function syncStockToInventory() {
         }
     });
     
-    alert("✅ Склад синхронизирован со станцией!\nТеперь нажмите '💾 Сохранить остатки' чтобы зафиксировать.");
+    alert("✅ Склад синхронизирован со станцией!\nТеперь нажмите ' Сохранить остатки' чтобы зафиксировать.");
 }
 
 // ==================== СПИСАНИЕ БРАКА/ОТХОДОВ ====================
@@ -1083,7 +1077,7 @@ function openWasteModal() {
     
     if (wasteStats.items.length > 0) {
         html += '<hr style="margin: 15px 0;">';
-        html += '<h4 style="margin: 0 0 8px 0; color: #7f8c8d;">📊 Списание за смену:</h4>';
+        html += '<h4 style="margin: 0 0 8px 0; color: #7f8c8d;"> Списание за смену:</h4>';
         html += '<div style="background: #f8f9fa; padding: 10px; border-radius: 4px;">';
         wasteStats.items.forEach(item => {
             html += `<div style="font-size: 13px; margin-bottom: 3px;">• ${item.name}: ${item.qty} шт. (${item.time}) — $${item.cost}</div>`;
