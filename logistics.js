@@ -3,6 +3,7 @@ let lastCalculatedPrices = {};
 let lastCalculatedCosts = {};
 let currentOrder = {};
 let shiftStats = { revenue: 0, profit: 0, orders: 0 };
+let wasteStats = { total: 0, items: [] };
 
 // ==================== ОСНОВНОЙ РАСЧЁТ ====================
 function calculateLogisticsCore() {
@@ -57,7 +58,7 @@ function calculateLogisticsCore() {
     let trk = {};
     let rev = 0;
     let cog = 0;
-    let htmlPrices = "<strong> ЦЕННИКИ ДЛЯ ВИТРИНЫ ФУДТРАКА:</strong><ul style='list-style-type:none;padding-left:0;'>";
+    let htmlPrices = "<strong>📋 ЦЕННИКИ ДЛЯ ВИТРИНЫ ФУДТРАКА:</strong><ul style='list-style-type:none;padding-left:0;'>";
 
     s.forEach(dish => {
         let f = { "овощи": 0, "рис": 0, "мясо": 0, "фрукты": 0, "сахар": 0, "мука": 0, "молоко": 0, "яйцо": 0, "рыба": 0, "масло": 0, "тесто": 0 };
@@ -185,7 +186,7 @@ function calculateLogisticsCore() {
     if (noCalcMsg) noCalcMsg.style.display = "none";
 
     let inf = `<p>Выбранных позиций: <strong>${s.length}</strong>. На позицию: <strong>${g} порц.</strong> (заготовок на порцию: ${totalComponentsPerServing})</p>`;
-    inf += `<p> Бюджет на оптовую базу: <b>$${bc.toLocaleString()}</b> | 🎣 Наличка на скупку рыбы: <b style="color:#e67e22;">$${fc.toLocaleString()}</b></p>`;
+    inf += `<p>🏪 Бюджет на оптовую базу: <b>$${bc.toLocaleString()}</b> | 🎣 Наличка на скупку рыбы: <b style="color:#e67e22;">$${fc.toLocaleString()}</b></p>`;
     inf += `<p><strong>🔥 ОБЩИЙ РАСХОД:</strong> <span style="color:#2980b9;font-weight:bold;">$${(bc + fc).toLocaleString()}</span></p>${hasDef ? htmlShop : "<p>✅ ЗАПАСОВ СЫРЬЯ ХВАТАЕТ!</p>"}`;
     
     const shoppingList = getEl("res_shopping_list");
@@ -233,7 +234,7 @@ function calculateLogisticsCore() {
     let truckLimit = t;
     let tripsToTruck = Math.ceil(totalPrepWeight / truckLimit);
     
-    lHtml += `<p style="background: #e8f4f8; padding: 10px; border-radius: 4px; margin: 10px 0;"><strong>️ Общий вес заготовок: ${totalPrepWeight.toFixed(1)} кг</strong> (Лимит: ${truckLimit} кг)`;
+    lHtml += `<p style="background: #e8f4f8; padding: 10px; border-radius: 4px; margin: 10px 0;"><strong>⚖️ Общий вес заготовок: ${totalPrepWeight.toFixed(1)} кг</strong> (Лимит: ${truckLimit} кг)`;
     if (totalPrepWeight > truckLimit) {
         lHtml += `<br><span style="color: #e67e22;">⚠️ Потребуется ${tripsToTruck} рейса(ов)</span>`;
     } else {
@@ -288,7 +289,7 @@ function showFullRecipeChain() {
         html += `<h4>${dish.name}</h4>`;
         html += `<div style="font-size: 13px; color: #7f8c8d; margin-bottom: 15px; font-style: italic;">${dish.craft}</div>`;
         html += `<div style="margin-left: 10px;">`;
-        html += `<strong style="color: #27ae60;"> Компоненты:</strong>`;
+        html += `<strong style="color: #27ae60;">🧪 Компоненты:</strong>`;
         html += `<ol style="margin: 10px 0; padding-left: 25px; line-height: 1.8;">`;
         
         for (let component in dish.recipe) {
@@ -540,7 +541,9 @@ function resetShiftData() {
     if (!confirm("⚠️ Завершить смену и обнулить кассу?")) return;
     shiftStats = { revenue: 0, profit: 0, orders: 0 };
     currentOrder = {};
+    wasteStats = { total: 0, items: [] };
     localStorage.setItem("shift_stats", JSON.stringify(shiftStats));
+    localStorage.setItem("waste_stats", JSON.stringify(wasteStats));
     updateShiftDisplay();
     initPOS();
     const reportContent = document.getElementById("shift_report_content");
@@ -548,14 +551,28 @@ function resetShiftData() {
 }
 
 function exportShiftReport() {
-    if (shiftStats.orders === 0) {
-        alert("Нет данных о заказах!");
+    const savedWaste = localStorage.getItem("waste_stats");
+    if (savedWaste) wasteStats = JSON.parse(savedWaste);
+
+    if (shiftStats.orders === 0 && wasteStats.items.length === 0) {
+        alert("Нет данных о заказах или списаниях!");
         return;
     }
     const date = new Date().toLocaleString("ru-RU");
-    let text = ` ОТЧЁТ ПО СМЕНЕ\n📅 Дата: ${date}\n━━━━━━━━━━━━━━━━━━━━\n`;
+    let text = `📊 ОТЧЁТ ПО СМЕНЕ\n📅 Дата: ${date}\n━━━━━━━━━━━━━━━━━━━━\n`;
     text += `Заказов: ${shiftStats.orders}\nВыручка: $${shiftStats.revenue.toLocaleString()}\n`;
-    text += `💰 ПРИБЫЛЬ: $${shiftStats.profit.toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `💰 ПРИБЫЛЬ: $${shiftStats.profit.toLocaleString()}\n`;
+    
+    if (wasteStats.items.length > 0) {
+        text += `\n🗑️ СПИСАНИЕ БРАКА:\n`;
+        wasteStats.items.forEach(item => {
+            text += `• ${item.name} x${item.qty} (${item.time}) — $${item.cost}\n`;
+        });
+        text += `Убыток от брака: $${wasteStats.total}\n`;
+        text += `💵 ЧИСТАЯ ПРИБЫЛЬ: $${(shiftStats.profit - wasteStats.total).toLocaleString()}\n`;
+    }
+    
+    text += `━━━━━━━━━━━━━━━━━━━━\n`;
     
     const modal = document.getElementById("sync_modal");
     const title = document.getElementById("sync_modal_title");
@@ -563,7 +580,7 @@ function exportShiftReport() {
     if (modal && title && content) {
         title.innerText = "📤 Отчёт по смене";
         content.innerHTML = `
-            <textarea id="export_code" readonly style="width: 100%; height: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: monospace; font-size: 13px; resize: vertical;">${text}</textarea>
+            <textarea id="export_code" readonly style="width: 100%; height: 250px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: monospace; font-size: 13px; resize: vertical;">${text}</textarea>
             <div style="margin-top: 10px; text-align: center;">
                 <button onclick="copyExportCode()" style="background: #27ae60; color: white; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; font-weight: bold;">📋 Скопировать</button>
             </div>
@@ -574,7 +591,6 @@ function exportShiftReport() {
 }
 
 // ==================== УЧЁТ ОСТАТКОВ ====================
-
 function getStockData() {
     const saved = localStorage.getItem("stock_data");
     if (saved) return JSON.parse(saved);
@@ -692,7 +708,7 @@ function showStockNotifications(result) {
     result.warnings.forEach(comp => {
         const name = COMPONENT_NAMES[comp] || comp;
         const stock = getStockData();
-        html += `<li style="color: #e67e22;">️ ${name}: осталось ${stock.truck[comp]} шт. Догрузите или приготовьте.</li>`;
+        html += `<li style="color: #e67e22;">⚠️ ${name}: осталось ${stock.truck[comp]} шт. Догрузите или приготовьте.</li>`;
     });
     
     html += '</ul></div>';
@@ -900,7 +916,7 @@ function openPrepareModal() {
         html += `<span>${name} (сейчас: ${stock.truck[comp] || 0})</span>`;
         html += `<div style="display: flex; gap: 5px;">`;
         html += `<input type="number" id="prepare_${comp}" value="10" min="1" style="width: 60px; padding: 4px;">`;
-        html += `<button onclick="doPrepare('${comp}')" style="background: #8e44ad; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">👨‍</button>`;
+        html += `<button onclick="doPrepare('${comp}')" style="background: #8e44ad; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">👨‍🍳</button>`;
         html += `</div></div>`;
     });
     
@@ -945,20 +961,11 @@ completeCurrentOrder = function() {
     updatePOSAvailability();
     showCurrentStock();
 };
-    
-    originalCompleteOrder();
-    
-    const result = consumeStock(currentOrder);
-    showStockNotifications(result);
-    updatePOSAvailability();
-    showCurrentStock();
-};
+
 // ==================== СИНХРОНИЗАЦИЯ СКЛАДА ====================
 function syncStockToInventory() {
     const stock = getStockData();
-    const logic = document.getElementById("business_logic").value;
     
-    // Базовое сырьё: суммируем все хранилища
     const baseIngredients = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"];
     
     baseIngredients.forEach(id => {
@@ -973,7 +980,6 @@ function syncStockToInventory() {
         el.value = total;
     });
     
-    // Заготовки: truck → в фудтрак, rv_storage → в автодом
     document.querySelectorAll(".ready-input").forEach(el => {
         let id = el.id.replace("ready_", "");
         if (id.endsWith("_трак")) {
@@ -987,9 +993,8 @@ function syncStockToInventory() {
     
     alert("✅ Склад синхронизирован со станцией!\nТеперь нажмите '💾 Сохранить остатки' чтобы зафиксировать.");
 }
-// ==================== СПИСАНИЕ БРАКА/ОТХОДОВ ====================
-let wasteStats = { total: 0, items: [] };
 
+// ==================== СПИСАНИЕ БРАКА/ОТХОДОВ ====================
 function loadWasteStats() {
     const saved = localStorage.getItem("waste_stats");
     if (saved) wasteStats = JSON.parse(saved);
@@ -1006,13 +1011,12 @@ function openWasteModal() {
     let html = '<div style="max-height: 60vh; overflow-y: auto;">';
     html += '<p style="color: #7f8c8d; font-size: 14px;">Выберите что списать (сырьё или заготовки):</p>';
     
-    // Сырьё из фудтрака
     const rawItems = Object.keys(stock.truck).filter(k => 
         ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"].includes(k)
     );
     
     if (rawItems.length > 0) {
-        html += '<h4 style="margin: 15px 0 8px 0; color: #e74c3c;"> Сырьё в фудтраке:</h4>';
+        html += '<h4 style="margin: 15px 0 8px 0; color: #e74c3c;">🥩 Сырьё в фудтраке:</h4>';
         rawItems.forEach(comp => {
             const name = COMPONENT_NAMES[comp] || comp;
             const qty = stock.truck[comp] || 0;
@@ -1027,7 +1031,6 @@ function openWasteModal() {
         });
     }
     
-    // Заготовки из фудтрака
     const prepItems = Object.keys(stock.truck).filter(k => 
         !["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"].includes(k)
     );
@@ -1048,13 +1051,12 @@ function openWasteModal() {
         });
     }
     
-    // Статистика брака за смену
     if (wasteStats.items.length > 0) {
         html += '<hr style="margin: 15px 0;">';
         html += '<h4 style="margin: 0 0 8px 0; color: #7f8c8d;">📊 Списание за смену:</h4>';
         html += '<div style="background: #f8f9fa; padding: 10px; border-radius: 4px;">';
         wasteStats.items.forEach(item => {
-            html += `<div style="font-size: 13px; margin-bottom: 3px;">• ${item.name}: ${item.qty} шт. — $${item.cost}</div>`;
+            html += `<div style="font-size: 13px; margin-bottom: 3px;">• ${item.name}: ${item.qty} шт. (${item.time}) — $${item.cost}</div>`;
         });
         html += `<div style="font-weight: bold; margin-top: 8px; color: #e74c3c;">Итого убыток: $${wasteStats.total}</div>`;
         html += '</div>';
@@ -1078,22 +1080,11 @@ function getRawPrice(comp) {
 }
 
 function getPrepPrice(comp) {
-    // Себестоимость заготовки (упрощённо)
     const prices = {
-        "вареный_рис": 45,
-        "картофельное_пюре": 110,
-        "мясной_фарш": 500,
-        "рыбный_фарш": 400,
-        "хлеб": 90,
-        "макароны": 90,
-        "сыр": 55,
-        "котлета": 555,
-        "рыбная_котлета": 455,
-        "стейк_заг": 610,
-        "рыба_фрукт_заг": 510,
-        "масло": 55,
-        "тесто": 90,
-        "карамель": 45
+        "вареный_рис": 45, "картофельное_пюре": 110, "мясной_фарш": 500,
+        "рыбный_фарш": 400, "хлеб": 90, "макароны": 90, "сыр": 55,
+        "котлета": 555, "рыбная_котлета": 455, "стейк_заг": 610,
+        "рыба_фрукт_заг": 510, "масло": 55, "тесто": 90, "карамель": 45
     };
     return prices[comp] || 0;
 }
@@ -1113,13 +1104,12 @@ function doWaste(comp, pricePerUnit) {
     stock.truck[comp] -= qty;
     saveStockData(stock);
     
-    // Записываем в статистику
     const name = COMPONENT_NAMES[comp] || comp;
     wasteStats.items.push({ name, qty, cost, time: new Date().toLocaleTimeString() });
     wasteStats.total += cost;
     saveWasteStats();
     
-    alert(`️ Списано: ${name} x${qty} (убыток: $${cost})`);
+    alert(`🗑️ Списано: ${name} x${qty} (убыток: $${cost})`);
     openWasteModal();
     showCurrentStock();
     updatePOSAvailability();
