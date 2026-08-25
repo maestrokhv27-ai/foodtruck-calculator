@@ -81,6 +81,24 @@ const Inventory = {
     
     // УМНАЯ функция: определяет что показывать в заготовках
     renderPrepStock() {
+    renderPrepStock() {
+    if (!this.prepStockTable) {
+        console.error('❌ prepStockTable не найден!');
+        return;
+    }
+    
+    console.log('🔍 Отладка renderPrepStock:');
+    console.log('- PREP_ITEMS:', PREP_ITEMS);
+    console.log('- BASE_INGREDIENTS:', BASE_INGREDIENTS);
+    console.log('- PREP_RECIPES:', PREP_RECIPES);
+    console.log('- DISH_DATABASE:', DISH_DATABASE);
+    console.log('- selectedDishes:', Store.get('selectedDishes'));
+    
+    const prepStock = Store.get('prepStock');
+    const logic = Store.get('businessLogic');
+    const showRV = logic === '3' || logic === '4';
+    
+    // ... остальной код
     if (!this.prepStockTable) return;
     
     const prepStock = Store.get('prepStock');
