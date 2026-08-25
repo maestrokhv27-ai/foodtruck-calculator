@@ -36,141 +36,127 @@ const Inventory = {
         this.renderPrepStock();
     },
     
-renderPrepStock() {
-    if (!this.prepStockTable) return;
-    
-    const prepStock = Store.get('prepStock');
-    const logic = Store.get('businessLogic');
-    const showRV = logic === '3' || logic === '4';
-    
-    // Показываем ТОЛЬКО заготовки (не сырьё!)
-    const items = PREP_ITEMS;
-    
-    // Создаём заголовок таблицы
-    const thead = this.prepStockTable.querySelector('thead');
-    if (thead && !thead.innerHTML.includes('В Траке')) {
-        thead.innerHTML = `
-            <tr>
-                <th>Заготовка</th>
-                <th>В Траке</th>
-                ${showRV ? '<th>В Автодоме</th>' : ''}
-                <th>Заготовка</th>
-                <th>В Траке</th>
-                ${showRV ? '<th>В Автодоме</th>' : ''}
-            </tr>
-        `;
-    }
-    
-    const rows = [];
-    
-    for (let i = 0; i < items.length; i += 2) {
-        const item1 = items[i];
-        const item2 = items[i + 1];
+    renderRawStock() {
+        if (!this.rawStockTable) return;
         
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${COMPONENT_NAMES[item1] || item1}</td>
-            <td><input type="number" class="prep-input" id="prep_${item1}_truck" 
-                       value="${prepStock.truck[item1] || 0}" data-item="${item1}" data-location="truck"></td>
-            ${showRV ? `<td><input type="number" class="prep-input" id="prep_${item1}_rv" 
-                       value="${prepStock.rvStorage[item1] || 0}" data-item="${item1}" data-location="rvStorage"></td>` : ''}
-            ${item2 ? `<td>${COMPONENT_NAMES[item2] || item2}</td>` : '<td></td>'}
-            ${item2 ? `<td><input type="number" class="prep-input" id="prep_${item2}_truck" 
-                       value="${prepStock.truck[item2] || 0}" data-item="${item2}" data-location="truck"></td>` : '<td></td>'}
-            ${item2 && showRV ? `<td><input type="number" class="prep-input" id="prep_${item2}_rv" 
-                       value="${prepStock.rvStorage[item2] || 0}" data-item="${item2}" data-location="rvStorage"></td>` : '<td></td>'}
-        `;
-        rows.push(row);
-    }
-    
-    this.prepStockTable.innerHTML = '';
-    if (thead) this.prepStockTable.appendChild(thead);
-    
-    const tbody = this.prepStockTable.querySelector('tbody') || document.createElement('tbody');
-    rows.forEach(row => tbody.appendChild(row));
-    this.prepStockTable.appendChild(tbody);
-    
-    // Подписка на изменения
-    this.prepStockTable.querySelectorAll('.prep-input').forEach(input => {
-        input.addEventListener('input', (e) => {
-            const item = e.target.dataset.item;
-            const location = e.target.dataset.location;
-            const value = parseInt(e.target.value) || 0;
-            const prepStock = Store.get('prepStock');
-            prepStock[location][item] = value;
-            Store.set('prepStock', prepStock);
-        });
-    });
-},
-    
-renderPrepStock() {
-    if (!this.prepStockTable) return;
-    
-    const prepStock = Store.get('prepStock');
-    const logic = Store.get('businessLogic');
-    const showRV = logic === '3' || logic === '4';
-    
-    const selectedDishes = Store.get('selectedDishes');
-    const requiredComponents = new Set();
-    
-    // Собираем все компоненты из выбранных блюд
-    if (window.DISH_DATABASE) {
-        DISH_DATABASE.forEach((dish, index) => {
-            if (selectedDishes[index]) {
-                Object.keys(dish.recipe).forEach(comp => {
-                    // Добавляем не только ингредиенты блюда, но и промежуточные заготовки
-                    requiredComponents.add(comp);
-                    if (comp === 'картофельное_пюре' || comp === 'котлета' || comp === 'рыбная_котлета') {
-                        requiredComponents.add('масло');
-                    }
-                });
-            }
-        });
-    }
-    
-    // Если ничего не выбрано — показываем все возможные заготовки
-    if (requiredComponents.size === 0) {
-        PREP_ITEMS.forEach(item => requiredComponents.add(item));
-    }
-    
-    const rows = [];
-    const items = Array.from(requiredComponents);
-    
-    for (let i = 0; i < items.length; i += 2) {
-        const item1 = items[i];
-        const item2 = items[i + 1];
+        const rawStock = Store.get('rawStock');
+        const rows = [];
         
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${COMPONENT_NAMES[item1] || item1}</td>
-            <td><input type="number" class="prep-input" id="prep_${item1}_truck" 
-                       value="${prepStock.truck[item1] || 0}" data-item="${item1}" data-location="truck"></td>
-            ${showRV ? `<td><input type="number" class="prep-input" id="prep_${item1}_rv" 
-                       value="${prepStock.rvStorage[item1] || 0}" data-item="${item1}" data-location="rvStorage"></td>` : ''}
-            ${item2 ? `<td>${COMPONENT_NAMES[item2] || item2}</td>` : '<td></td>'}
-            ${item2 ? `<td><input type="number" class="prep-input" id="prep_${item2}_truck" 
-                       value="${prepStock.truck[item2] || 0}" data-item="${item2}" data-location="truck"></td>` : '<td></td>'}
-            ${item2 && showRV ? `<td><input type="number" class="prep-input" id="prep_${item2}_rv" 
-                       value="${prepStock.rvStorage[item2] || 0}" data-item="${item2}" data-location="rvStorage"></td>` : '<td></td>'}
-        `;
-        rows.push(row);
-    }
-    
-    this.prepStockTable.innerHTML = '';
-    rows.forEach(row => this.prepStockTable.appendChild(row));
-    
-    // Подписка на изменения
-    this.prepStockTable.querySelectorAll('.prep-input').forEach(input => {
-        input.addEventListener('input', (e) => {
-            const item = e.target.dataset.item;
-            const location = e.target.dataset.location;
-            const value = parseInt(e.target.value) || 0;
-            const prepStock = Store.get('prepStock');
-            prepStock[location][item] = value;
-            Store.set('prepStock', prepStock);
+        const items = [
+            ['овощи', 55], ['рис', 45], ['мясо', 500], ['фрукты', 55],
+            ['сахар', 45], ['мука', 45], ['молоко', 55], ['яйцо', 45],
+            ['рыба', 400], ['лёд', 45], ['пиво', 60], ['вино', 350]
+        ];
+        
+        for (let i = 0; i < items.length; i += 2) {
+            const [item1, price1] = items[i];
+            const [item2, price2] = items[i + 1] || ['', 0];
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${COMPONENT_NAMES[item1]}</td>
+                <td>$${price1}</td>
+                <td><input type="number" id="stock_${item1}" value="${rawStock[item1] || 0}" data-item="${item1}"></td>
+                <td>${item2 ? COMPONENT_NAMES[item2] : ''}</td>
+                <td>${item2 ? '$' + price2 : ''}</td>
+                <td>${item2 ? `<input type="number" id="stock_${item2}" value="${rawStock[item2] || 0}" data-item="${item2}">` : ''}</td>
+            `;
+            rows.push(row);
+        }
+        
+        this.rawStockTable.innerHTML = '';
+        rows.forEach(row => this.rawStockTable.appendChild(row));
+        
+        // Подписка на изменения
+        this.rawStockTable.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const item = e.target.dataset.item;
+                const value = parseInt(e.target.value) || 0;
+                const stock = Store.get('rawStock');
+                stock[item] = value;
+                Store.set('rawStock', stock);
+            });
         });
-    });
-},
+    },
+    
+    renderPrepStock() {
+        if (!this.prepStockTable) return;
+        
+        const prepStock = Store.get('prepStock');
+        const logic = Store.get('businessLogic');
+        const showRV = logic === '3' || logic === '4';
+        
+        // Показываем ТОЛЬКО заготовки (не сырьё!)
+        const items = PREP_ITEMS;
+        
+        // Создаём заголовок таблицы
+        const thead = this.prepStockTable.querySelector('thead');
+        if (thead) {
+            thead.innerHTML = `
+                <tr>
+                    <th>Заготовка</th>
+                    <th>В Траке</th>
+                    ${showRV ? '<th>В Автодоме</th>' : ''}
+                    <th>Заготовка</th>
+                    <th>В Траке</th>
+                    ${showRV ? '<th>В Автодоме</th>' : ''}
+                </tr>
+            `;
+        }
+        
+        const rows = [];
+        
+        for (let i = 0; i < items.length; i += 2) {
+            const item1 = items[i];
+            const item2 = items[i + 1];
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${COMPONENT_NAMES[item1] || item1}</td>
+                <td><input type="number" class="prep-input" id="prep_${item1}_truck" 
+                           value="${prepStock.truck[item1] || 0}" data-item="${item1}" data-location="truck"></td>
+                ${showRV ? `<td><input type="number" class="prep-input" id="prep_${item1}_rv" 
+                           value="${prepStock.rvStorage[item1] || 0}" data-item="${item1}" data-location="rvStorage"></td>` : ''}
+                ${item2 ? `<td>${COMPONENT_NAMES[item2] || item2}</td>` : '<td></td>'}
+                ${item2 ? `<td><input type="number" class="prep-input" id="prep_${item2}_truck" 
+                           value="${prepStock.truck[item2] || 0}" data-item="${item2}" data-location="truck"></td>` : '<td></td>'}
+                ${item2 && showRV ? `<td><input type="number" class="prep-input" id="prep_${item2}_rv" 
+                           value="${prepStock.rvStorage[item2] || 0}" data-item="${item2}" data-location="rvStorage"></td>` : '<td></td>'}
+            `;
+            rows.push(row);
+        }
+        
+        this.prepStockTable.innerHTML = '';
+        if (thead) this.prepStockTable.appendChild(thead);
+        
+        const tbody = this.prepStockTable.querySelector('tbody') || document.createElement('tbody');
+        rows.forEach(row => tbody.appendChild(row));
+        this.prepStockTable.appendChild(tbody);
+        
+        // Подписка на изменения
+        this.prepStockTable.querySelectorAll('.prep-input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const item = e.target.dataset.item;
+                const location = e.target.dataset.location;
+                const value = parseInt(e.target.value) || 0;
+                const prepStock = Store.get('prepStock');
+                prepStock[location][item] = value;
+                Store.set('prepStock', prepStock);
+            });
+        });
+    },
+    
+    save() {
+        alert('💾 Данные сохранены!');
+    },
+    
+    reset() {
+        if (confirm('🧹 Полностью обнулить все склады и заготовки?')) {
+            Store.reset();
+            this.loadFromStore();
+            EventBus.emit('state:reset');
+        }
+    },
     
     syncWithStation() {
         const prepStock = Store.get('prepStock');
