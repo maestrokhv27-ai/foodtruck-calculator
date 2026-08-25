@@ -844,6 +844,11 @@ function showCurrentStock() {
     const container = document.getElementById("current_stock_display");
     if (!container) return;
     
+    // Проверяем что объект существует
+    if (!stock.truck || typeof stock.truck !== 'object') {
+        stock.truck = {};
+    }
+    
     let html = '<div style="background: #e8f4f8; border-left: 4px solid #2980b9; padding: 12px; border-radius: 6px; margin-bottom: 15px;">';
     html += '<strong style="color: #2c3e50;">📦 Остатки в фудтраке:</strong>';
     html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 10px;">';
@@ -880,16 +885,21 @@ function openRestockModal() {
         html += '<p style="color: #e74c3c;">Нет хранилищ для догрузки (режим "Только фудтрак").</p>';
     } else {
         sources.forEach(src => {
-            const items = Object.keys(stock[src]).filter(k => stock[src][k] > 0);
+            // Проверяем что объект существует
+            if (!stock[src.key] || typeof stock[src.key] !== 'object') {
+                stock[src.key] = {};
+            }
+            
+            const items = Object.keys(stock[src.key]).filter(k => stock[src.key][k] > 0);
             if (items.length === 0) return;
             
             html += `<h4 style="margin: 15px 0 8px 0; color: #2c3e50;">${src.name}:</h4>`;
             items.forEach(comp => {
                 const name = COMPONENT_NAMES[comp] || comp;
                 html += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border-radius: 4px; margin-bottom: 5px;">`;
-                html += `<span>${name} (${stock[src][comp]} шт.)</span>`;
+                html += `<span>${name} (${stock[src.key][comp]} шт.)</span>`;
                 html += `<div style="display: flex; gap: 5px;">`;
-                html += `<input type="number" id="restock_${src.key}_${comp}" value="10" min="1" max="${stock[src][comp]}" style="width: 60px; padding: 4px;">`;
+                html += `<input type="number" id="restock_${src.key}_${comp}" value="10" min="1" max="${stock[src.key][comp]}" style="width: 60px; padding: 4px;">`;
                 html += `<button onclick="doRestock('${comp}', '${src.key}')" style="background: #27ae60; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">+</button>`;
                 html += `</div></div>`;
             });
