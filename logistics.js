@@ -603,15 +603,12 @@ function initStockFromInventory() {
     const logic = document.getElementById("business_logic").value;
     const stock = getStockData();
     
-    // Очищаем все остатки перед загрузкой
     stock.truck = {};
     stock.rv_storage = {};
     stock.rv_cabinet = {};
     
-    // Базовое сырьё (покупается в магазине)
     const baseIngredients = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"];
     
-    // Собираем компоненты из таблицы ЗАГОТОВОК (то, что ввёл пользователь)
     const readyComponents = new Set();
     document.querySelectorAll(".ready-input").forEach(el => {
         const val = parseInt(el.value) || 0;
@@ -621,14 +618,10 @@ function initStockFromInventory() {
         }
     });
     
-    // 1. Распределяем СЫРЬЁ из таблицы сырья (stock_...)
-    // НО только если этот компонент НЕ введён в таблице заготовок!
     baseIngredients.forEach(id => {
-        const el = document.getElementById(`stock_${id}`);
+        const el = document.getElementById("stock_" + id);
         if (!el) return;
         const val = parseInt(el.value) || 0;
-        
-        // Если этот компонент есть в заготовках — не трогаем сырьё
         if (readyComponents.has(id)) return;
         
         if (logic === "1") {
@@ -640,6 +633,26 @@ function initStockFromInventory() {
             stock.rv_cabinet[id] = val - Math.floor(val / 2);
         }
     });
+    
+    document.querySelectorAll(".ready-input").forEach(el => {
+        const val = parseInt(el.value) || 0;
+        if (val === 0) return;
+        
+        let id = el.id.replace("ready_", "");
+        if (id.endsWith("_трак")) {
+            id = id.replace("_трак", "");
+            stock.truck[id] = (stock.truck[id] || 0) + val;
+        } else if (id.endsWith("_авд")) {
+            id = id.replace("_авд", "");
+            stock.rv_storage[id] = (stock.rv_storage[id] || 0) + val;
+        }
+    });
+    
+    saveStockData(stock);
+    showCurrentStock();
+    updatePOSAvailability();
+    return stock;
+}
     
     // 2. Распределяем ЗАГОТОВКИ из таблицы (включая "овощи" если они там есть!)
     document.querySelectorAll(".ready-input").forEach(el => {
