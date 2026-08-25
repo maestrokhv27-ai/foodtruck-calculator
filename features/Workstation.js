@@ -35,26 +35,60 @@ const Workstation = {
 },
     
     bindEvents() {
-        var self = this;
-        
-        if (this.completeBtn) {
-            this.completeBtn.addEventListener('click', function() { self.completeOrder(); });
+    var self = this;
+    
+    if (this.completeBtn) {
+        this.completeBtn.addEventListener('click', function() { self.completeOrder(); });
+    }
+    if (this.resetBtn) {
+        this.resetBtn.addEventListener('click', function() { self.resetShift(); });
+    }
+    if (this.loadStockBtn) {
+        this.loadStockBtn.addEventListener('click', function() { self.loadStockFromInventory(); });
+    }
+    if (this.restockBtn) {
+        this.restockBtn.addEventListener('click', function() { self.openRestockModal(); });
+    }
+    if (this.prepareBtn) {
+        this.prepareBtn.addEventListener('click', function() { self.openPrepareModal(); });
+    }
+    if (this.wasteBtn) {
+        this.wasteBtn.addEventListener('click', function() { self.openWasteModal(); });
+    }
+    
+    // 🔥 УНИВЕРСАЛЬНОЕ ДЕЛЕГИРОВАНИЕ НА DOCUMENT — работает всегда!
+    document.addEventListener('click', function(e) {
+        // Кнопка "+"
+        if (e.target.classList.contains('pos-btn-plus')) {
+            e.preventDefault();
+            e.stopPropagation();
+            var idx = parseInt(e.target.getAttribute('data-index'));
+            if (!isNaN(idx)) {
+                self.addToOrder(idx, 1);
+                self.renderPOS();
+                self.renderOrder();
+            }
+            return;
         }
-        if (this.resetBtn) {
-            this.resetBtn.addEventListener('click', function() { self.resetShift(); });
+        // Кнопка "-"
+        if (e.target.classList.contains('pos-btn-minus')) {
+            e.preventDefault();
+            e.stopPropagation();
+            var idx = parseInt(e.target.getAttribute('data-index'));
+            if (!isNaN(idx)) {
+                self.addToOrder(idx, -1);
+                self.renderPOS();
+                self.renderOrder();
+            }
+            return;
         }
-        if (this.loadStockBtn) {
-            this.loadStockBtn.addEventListener('click', function() { self.loadStockFromInventory(); });
-        }
-        if (this.restockBtn) {
-            this.restockBtn.addEventListener('click', function() { self.openRestockModal(); });
-        }
-        if (this.prepareBtn) {
-            this.prepareBtn.addEventListener('click', function() { self.openPrepareModal(); });
-        }
-        if (this.wasteBtn) {
-            this.wasteBtn.addEventListener('click', function() { self.openWasteModal(); });
-        }
+    });
+    
+    EventBus.on('store:ready', function() { self.loadFromStore(); });
+    EventBus.on('state:currentOrder:changed', function() { self.renderOrder(); });
+    EventBus.on('state:shift:changed', function() { self.updateShiftDisplay(); });
+    EventBus.on('state:waste:changed', function() { self.updateShiftDisplay(); });
+},
         
         // 🔥 ДЕЛЕГИРОВАНИЕ СОБЫТИЙ: гарантированно ловит клики по + и - даже после перерисовки
         if (this.posGrid) {
@@ -121,11 +155,14 @@ const Workstation = {
     },
     
     addToOrder(idx, change) {
-        var currentOrder = Store.get('currentOrder');
-        currentOrder[idx] = (currentOrder[idx] || 0) + change;
-        if (currentOrder[idx] <= 0) delete currentOrder[idx];
-        Store.set('currentOrder', currentOrder);
-    },
+    var currentOrder = Store.get('currentOrder');
+    currentOrder[idx] = (currentOrder[idx] || 0) + change;
+    if (currentOrder[idx] <= 0) delete currentOrder[idx];
+    Store.set('currentOrder', currentOrder);
+    // Явный рендер после изменения
+    this.renderPOS();
+    this.renderOrder();
+},
     
     renderOrder() {
         var currentOrder = Store.get('currentOrder');
