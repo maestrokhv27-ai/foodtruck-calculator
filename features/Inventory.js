@@ -49,8 +49,10 @@ const Inventory = {
         ];
         
         for (let i = 0; i < items.length; i += 2) {
-            const [item1, price1] = items[i];
-            const [item2, price2] = items[i + 1] || ['', 0];
+            const item1 = items[i][0];
+            const price1 = items[i][1];
+            const item2 = items[i + 1] ? items[i + 1][0] : '';
+            const price2 = items[i + 1] ? items[i + 1][1] : 0;
             
             const row = document.createElement('tr');
             row.innerHTML = '<td>' + COMPONENT_NAMES[item1] + '</td>' +
@@ -76,107 +78,28 @@ const Inventory = {
         });
     },
     
-renderPrepStock() {
-    if (!this.prepStockTable) return;
-    
-    const prepStock = Store.get('prepStock');
-    const logic = Store.get('businessLogic');
-    const showRV = logic === '3' || logic === '4';
-    
-    // Чистое сырьё (никогда не показываем в заготовках)
-    const PURE_RAW = ["мясо", "рыба", "лосось", "тунец", "такифугу", "мальма", "мука", "молоко", "яйцо", "лёд", "пиво", "вино"];
-    
-    // Сырьё двойного использования
-    const DUAL_USE = ["овощи", "фрукты", "сахар", "рис"];
-    
-    // Только заготовки
-    const PREP_ONLY = PREP_ITEMS.filter(item => !PURE_RAW.includes(item));
-    
-    // Все возможные компоненты для таблицы заготовок
-    const allPossibleItems = [...PREP_ONLY, ...DUAL_USE].sort();
-    
-    // Заголовок
-    const thead = this.prepStockTable.querySelector('thead');
-    if (thead) {
-        let headerHtml = '<tr><th>Компонент</th><th>🚚 Фудтрак</th>';
-        if (showRV) headerHtml += '<th>🏠 Автодом</th>';
-        headerHtml += '<th>Компонент</th><th>🚚 Фудтрак</th>';
-        if (showRV) headerHtml += '<th>🏠 Автодом</th>';
-        headerHtml += '</tr>';
-        thead.innerHTML = headerHtml;
-    }
-    
-    // Создаём строки
-    const rows = [];
-    
-    for (let i = 0; i < allPossibleItems.length; i += 2) {
-        const item1 = allPossibleItems[i];
-        const item2 = allPossibleItems[i + 1];
+    renderPrepStock() {
+        if (!this.prepStockTable) return;
         
-        let rowHtml = '<td>' + (COMPONENT_NAMES[item1] || item1) + '</td>';
-        rowHtml += '<td><input type="number" class="prep-input" id="prep_' + item1 + '_truck" value="' + (prepStock.truck[item1] || 0) + '" data-item="' + item1 + '" data-location="truck"></td>';
+        const prepStock = Store.get('prepStock');
+        const logic = Store.get('businessLogic');
+        const showRV = logic === '3' || logic === '4';
         
-        if (showRV) {
-            rowHtml += '<td><input type="number" class="prep-input" id="prep_' + item1 + '_rv" value="' + (prepStock.rvStorage[item1] || 0) + '" data-item="' + item1 + '" data-location="rvStorage"></td>';
-        }
+        // Чистое сырьё (никогда не показываем в заготовках)
+        const PURE_RAW = ['мясо', 'рыба', 'лосось', 'тунец', 'такифугу', 'мальма', 'мука', 'молоко', 'яйцо', 'лёд', 'пиво', 'вино'];
         
-        if (item2) {
-            rowHtml += '<td>' + (COMPONENT_NAMES[item2] || item2) + '</td>';
-            rowHtml += '<td><input type="number" class="prep-input" id="prep_' + item2 + '_truck" value="' + (prepStock.truck[item2] || 0) + '" data-item="' + item2 + '" data-location="truck"></td>';
-            
-            if (showRV) {
-                rowHtml += '<td><input type="number" class="prep-input" id="prep_' + item2 + '_rv" value="' + (prepStock.rvStorage[item2] || 0) + '" data-item="' + item2 + '" data-location="rvStorage"></td>';
-            }
-        } else {
-            rowHtml += '<td></td><td></td>';
-            if (showRV) rowHtml += '<td></td>';
-        }
+        // Сырьё двойного использования
+        const DUAL_USE = ['овощи', 'фрукты', 'сахар', 'рис'];
         
-        const row = document.createElement('tr');
-        row.innerHTML = rowHtml;
-        rows.push(row);
-    }
-    
-    // Отрисовка
-    this.prepStockTable.innerHTML = '';
-    if (thead) this.prepStockTable.appendChild(thead);
-    
-    const tbody = this.prepStockTable.querySelector('tbody') || document.createElement('tbody');
-    rows.forEach(row => tbody.appendChild(row));
-    this.prepStockTable.appendChild(tbody);
-    
-    // Подписка на изменения
-    this.prepStockTable.querySelectorAll('.prep-input').forEach(input => {
-        input.addEventListener('input', (e) => {
-            const item = e.target.dataset.item;
-            const location = e.target.dataset.location;
-            const value = parseInt(e.target.value) || 0;
-            const prepStock = Store.get('prepStock');
-            prepStock[location][item] = value;
-            Store.set('prepStock', prepStock);
-        });
-    });
-}
-        
-        directBaseIngredients.forEach(comp => {
-            let usedForPrep = false;
-            for (let prep of allNeededPreps) {
-                const prepRecipe = PREP_RECIPES[prep];
-                if (prepRecipe && prepRecipe[comp]) {
-                    usedForPrep = true;
-                    break;
-                }
-            }
-            
-            if (!usedForPrep) {
-                itemsInTruck.add(comp);
-            } else {
-                itemsInRV.add(comp);
-            }
+        // Только заготовки
+        const PREP_ONLY = PREP_ITEMS.filter(function(item) {
+            return PURE_RAW.indexOf(item) === -1;
         });
         
-        allNeededPreps.forEach(prep => itemsInTruck.add(prep));
+        // Все возможные компоненты для таблицы заготовок
+        const allPossibleItems = PREP_ONLY.concat(DUAL_USE).sort();
         
+        // Заголовок
         const thead = this.prepStockTable.querySelector('thead');
         if (thead) {
             let headerHtml = '<tr><th>Компонент</th><th>🚚 Фудтрак</th>';
@@ -187,62 +110,26 @@ renderPrepStock() {
             thead.innerHTML = headerHtml;
         }
         
-        const allItems = new Set([...itemsInTruck, ...itemsInRV]);
-        
-        if (allItems.size === 0) {
-            const colCount = showRV ? 6 : 4;
-            this.prepStockTable.innerHTML = '<tr><td colspan="' + colCount + '" style="text-align: center; color: #7f8c8d; padding: 20px;">Выберите блюда во вкладке "Настройки"</td></tr>';
-            return;
-        }
-        
+        // Создаём строки
         const rows = [];
-        const itemsArray = Array.from(allItems).sort();
         
-        for (let i = 0; i < itemsArray.length; i += 2) {
-            const item1 = itemsArray[i];
-            const item2 = itemsArray[i + 1];
-            const inTruck1 = itemsInTruck.has(item1);
-            const inRV1 = itemsInRV.has(item1);
-            const inTruck2 = item2 ? itemsInTruck.has(item2) : false;
-            const inRV2 = item2 ? itemsInRV.has(item2) : false;
+        for (let i = 0; i < allPossibleItems.length; i += 2) {
+            const item1 = allPossibleItems[i];
+            const item2 = allPossibleItems[i + 1];
             
             let rowHtml = '<td>' + (COMPONENT_NAMES[item1] || item1) + '</td>';
-            rowHtml += '<td>';
-            if (inTruck1) {
-                rowHtml += '<input type="number" class="prep-input" id="prep_' + item1 + '_truck" value="' + (prepStock.truck[item1] || 0) + '" data-item="' + item1 + '" data-location="truck">';
-            } else {
-                rowHtml += '<span style="color:#bdc3c7;">—</span>';
-            }
-            rowHtml += '</td>';
+            rowHtml += '<td><input type="number" class="prep-input" id="prep_' + item1 + '_truck" value="' + (prepStock.truck[item1] || 0) + '" data-item="' + item1 + '" data-location="truck"></td>';
             
             if (showRV) {
-                rowHtml += '<td>';
-                if (inRV1) {
-                    rowHtml += '<input type="number" class="prep-input" id="prep_' + item1 + '_rv" value="' + (prepStock.rvStorage[item1] || 0) + '" data-item="' + item1 + '" data-location="rvStorage">';
-                } else {
-                    rowHtml += '<span style="color:#bdc3c7;">—</span>';
-                }
-                rowHtml += '</td>';
+                rowHtml += '<td><input type="number" class="prep-input" id="prep_' + item1 + '_rv" value="' + (prepStock.rvStorage[item1] || 0) + '" data-item="' + item1 + '" data-location="rvStorage"></td>';
             }
             
             if (item2) {
                 rowHtml += '<td>' + (COMPONENT_NAMES[item2] || item2) + '</td>';
-                rowHtml += '<td>';
-                if (inTruck2) {
-                    rowHtml += '<input type="number" class="prep-input" id="prep_' + item2 + '_truck" value="' + (prepStock.truck[item2] || 0) + '" data-item="' + item2 + '" data-location="truck">';
-                } else {
-                    rowHtml += '<span style="color:#bdc3c7;">—</span>';
-                }
-                rowHtml += '</td>';
+                rowHtml += '<td><input type="number" class="prep-input" id="prep_' + item2 + '_truck" value="' + (prepStock.truck[item2] || 0) + '" data-item="' + item2 + '" data-location="truck"></td>';
                 
                 if (showRV) {
-                    rowHtml += '<td>';
-                    if (inRV2) {
-                        rowHtml += '<input type="number" class="prep-input" id="prep_' + item2 + '_rv" value="' + (prepStock.rvStorage[item2] || 0) + '" data-item="' + item2 + '" data-location="rvStorage">';
-                    } else {
-                        rowHtml += '<span style="color:#bdc3c7;">—</span>';
-                    }
-                    rowHtml += '</td>';
+                    rowHtml += '<td><input type="number" class="prep-input" id="prep_' + item2 + '_rv" value="' + (prepStock.rvStorage[item2] || 0) + '" data-item="' + item2 + '" data-location="rvStorage"></td>';
                 }
             } else {
                 rowHtml += '<td></td><td></td>';
@@ -254,15 +141,19 @@ renderPrepStock() {
             rows.push(row);
         }
         
+        // Отрисовка
         this.prepStockTable.innerHTML = '';
         if (thead) this.prepStockTable.appendChild(thead);
         
         const tbody = this.prepStockTable.querySelector('tbody') || document.createElement('tbody');
-        rows.forEach(row => tbody.appendChild(row));
+        rows.forEach(function(row) {
+            tbody.appendChild(row);
+        });
         this.prepStockTable.appendChild(tbody);
         
-        this.prepStockTable.querySelectorAll('.prep-input').forEach(input => {
-            input.addEventListener('input', (e) => {
+        // Подписка на изменения
+        this.prepStockTable.querySelectorAll('.prep-input').forEach(function(input) {
+            input.addEventListener('input', function(e) {
                 const item = e.target.dataset.item;
                 const location = e.target.dataset.location;
                 const value = parseInt(e.target.value) || 0;
@@ -289,17 +180,17 @@ renderPrepStock() {
         const prepStock = Store.get('prepStock');
         const rawStock = Store.get('rawStock');
         
-        Object.keys(prepStock.truck).forEach(item => {
+        Object.keys(prepStock.truck).forEach(function(item) {
             const input = document.getElementById('prep_' + item + '_truck');
             if (input) input.value = prepStock.truck[item];
         });
         
-        Object.keys(prepStock.rvStorage).forEach(item => {
+        Object.keys(prepStock.rvStorage).forEach(function(item) {
             const input = document.getElementById('prep_' + item + '_rv');
             if (input) input.value = prepStock.rvStorage[item];
         });
         
-        Object.keys(rawStock).forEach(item => {
+        Object.keys(rawStock).forEach(function(item) {
             const input = document.getElementById('stock_' + item);
             if (input) input.value = rawStock[item];
         });
