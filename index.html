@@ -187,8 +187,9 @@
                <tr><td>🍺 ПИВО</td><td>$60</td><td><input type="number" id="stock_пиво" value="0"></td><td>🍷 ВИНО</td><td>$350</td><td><input type="number" id="stock_вино" value="0"></td></tr>
             </tbody>
         </table>
-        <button class="btn-save" onclick="saveToLocalStorage()">💾 Сохранить остатки</button>
-        <button class="btn-reset" onclick="resetAllFields()"> Обнулить всё</button>
+        <button onclick="syncStockToInventory()" style="width:100%; background:#16a085; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold; margin-bottom:10px;">🔄 Синхронизировать склад со станцией</button>
+        <button class="btn-save" onclick="saveToLocalStorage()"> Сохранить остатки</button>
+        <button class="btn-reset" onclick="resetAllFields()">🧹 Обнулить всё</button>
     </div>
 
     <!-- Вкладка 3: Закупка -->
