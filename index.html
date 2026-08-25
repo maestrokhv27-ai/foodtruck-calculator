@@ -227,10 +227,11 @@
         <div id="current_stock_display"></div>
         
         <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-            <button onclick="initStockFromInventory(); showCurrentStock(); updatePOSAvailability();" style="flex: 1; min-width: 150px; background: #3498db; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">📥 Загрузить остатки со склада</button>
-            <button onclick="openRestockModal()" style="flex: 1; min-width: 150px; background: #e67e22; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">🔄 Догрузить из хранилища</button>
-            <button onclick="openPrepareModal()" style="flex: 1; min-width: 150px; background: #8e44ad; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">👨‍🍳 Приготовить заготовки</button>
-        </div>
+                <button onclick="initStockFromInventory(); showCurrentStock(); updatePOSAvailability();" style="flex: 1; min-width: 150px; background: #3498db; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">📥 Загрузить остатки со склада</button>
+                <button onclick="openRestockModal()" style="flex: 1; min-width: 150px; background: #e67e22; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;"> Догрузить из хранилища</button>
+                <button onclick="openPrepareModal()" style="flex: 1; min-width: 150px; background: #8e44ad; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">👨‍🍳 Приготовить заготовки</button>
+                <button onclick="openWasteModal()" style="flex: 1; min-width: 150px; background: #e74c3c; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">🗑️ Списать брак</button>
+       </div>
         
         <div id="cash_register_block">
             <strong style="display: block; margin-bottom: 8px; color: #2c3e50;">📌 Добавить в текущий заказ:</strong>
