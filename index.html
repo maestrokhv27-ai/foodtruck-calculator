@@ -4,116 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ERP Фудтрака | GTA 5 RP</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 0; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; min-height: 100vh; display: flex; flex-direction: column; }
-        
-        .header { background: #2c3e50; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .header h1 { margin: 0; font-size: 20px; border: none; padding: 0; }
-        .header-actions { display: flex; gap: 10px; }
-        .header-btn { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-        .header-btn:hover { background: rgba(255,255,255,0.2); }
-
-        .tab-nav { display: flex; background: #34495e; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; border-bottom: 3px solid #27ae60; }
-        .tab-btn { flex: 1; min-width: 120px; background: none; border: none; color: #bdc3c7; padding: 15px 10px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; border-bottom: 3px solid transparent; margin-bottom: -3px; }
-        .tab-btn:hover { color: white; background: rgba(255,255,255,0.05); }
-        .tab-btn.active { color: #27ae60; border-bottom-color: #27ae60; background: rgba(39, 174, 96, 0.1); }
-
-        .tab-content { display: none; padding: 20px; animation: fadeIn 0.3s; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        h2 { color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px; margin-top: 0; font-size: 18px; }
-        .logic-select-box { background: #e8f4f8; border-left: 5px solid #2980b9; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
-        .logic-select-box select { padding: 10px; font-size: 16px; width: 100%; border-radius: 4px; border: 1px solid #bdc3c7; }
-        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px dashed #7f8c8d; margin-bottom: 20px; }
-        .config-group { display: flex; flex-direction: column; }
-        .config-group label { font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #555; }
-        .config-group input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .menu-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #fff; }
-        .menu-item { display: flex; align-items: center; font-size: 14px; cursor: pointer; padding: 6px; border-radius: 4px; }
-        .menu-item:hover { background: #f0f3f4; }
-        .menu-item input { margin-right: 10px; transform: scale(1.2); }
-        
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background-color: #34495e; color: white; font-size: 14px; }
-        td input[type="number"] { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box; }
-        
-        .btn-calc { width: 100%; background-color: #27ae60; color: white; border: none; padding: 16px; font-size: 18px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px; }
-        .btn-calc:hover { background-color: #2196f3; }
-        .btn-save { width: 100%; background-color: #2980b9; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .btn-reset { width: 100%; background-color: #c0392b; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-
-        .result-box { background-color: #f4f9f4; border: 1px solid #27ae60; border-left: 6px solid #27ae60; padding: 20px; border-radius: 6px; margin-top: 20px; }
-        .result-box h3 { color: #27ae60; margin-top: 0; border-bottom: 1px solid #e2f0d9; padding-bottom: 5px; }
-        .error-card { background-color: #fdf2f2; border: 1px solid #f8b4b4; border-left: 6px solid #e74c3c; color: #9b1c1c; padding: 15px; margin-top: 20px; border-radius: 6px; display: none; }
-
-        /* POS стили */
-        .pos-summary { display: flex; justify-content: space-between; background: #2c3e50; color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-        .pos-summary div { text-align: center; flex: 1; }
-        .pos-menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 15px; }
-        .pos-item { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        
-        /* Секция рецептов внутри рабочей станции */
-        .recipes-section { margin-top: 25px; padding-top: 20px; border-top: 2px dashed #bdc3c7; }
-        .recipe-card { background: white; border-top: 4px solid #27ae60; border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
-        .recipe-card h4 { margin: 0 0 10px 0; color: #2c3e50; font-size: 18px; }
-        
-        /* Модальное окно */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 10px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
-
-        /* Тёмная тема */
-        body.dark-theme { background-color: #1a1a2e; color: #e0e0e0; }
-        body.dark-theme .container { background: #16213e; }
-        body.dark-theme .header { background: #0f3460; }
-        body.dark-theme .tab-nav { background: #0f3460; }
-        body.dark-theme .tab-btn { color: #b0b0b0; }
-        body.dark-theme .tab-btn.active { color: #27ae60; background: rgba(39, 174, 96, 0.1); }
-        body.dark-theme .logic-select-box { background: #0f3460; }
-        body.dark-theme .config-grid { background: #1a1a2e; border-color: #0f3460; }
-        body.dark-theme .config-group label { color: #b0b0b0; }
-        body.dark-theme .config-group input { background: #16213e; color: #e0e0e0; border-color: #0f3460; }
-        body.dark-theme .menu-container { background: #16213e; border-color: #0f3460; }
-        body.dark-theme .menu-item:hover { background: #0f3460; }
-        body.dark-theme table { background: #16213e; }
-        body.dark-theme th { background-color: #0f3460; }
-        body.dark-theme td { border-color: #0f3460; color: #e0e0e0; }
-        body.dark-theme td input[type="number"] { background: #1a1a2e; color: #e0e0e0; border-color: #0f3460; }
-        body.dark-theme .result-box { background-color: #0f3460; border-color: #27ae60; }
-        body.dark-theme .modal-content { background: #16213e; color: #e0e0e0; }
-        body.dark-theme .pos-item { background: #1a1a2e; border-color: #0f3460; color: #e0e0e0; }
-        body.dark-theme .recipe-card { background: #16213e; border-color: #0f3460; }
-        body.dark-theme .recipe-card h4 { color: #e0e0e0; }
-
-        /* Адаптивность */
-        @media screen and (max-width: 768px) {
-            .tab-btn { font-size: 12px; padding: 12px 8px; min-width: 100px; }
-            #table_raw_stock, #table_raw_stock thead, #table_raw_stock tbody, #table_raw_stock tr,
-            #table_ready_stock, #table_ready_stock thead, #table_ready_stock tbody, #table_ready_stock tr {
-                display: block; width: 100%;
-            }
-            #table_raw_stock thead, #table_ready_stock thead { display: none; }
-            #table_raw_stock tr, #table_ready_stock tr {
-                margin-bottom: 15px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 12px;
-            }
-            body.dark-theme #table_raw_stock tr, body.dark-theme #table_ready_stock tr { background: #1a1a2e; border-color: #0f3460; }
-            #table_raw_stock td, #table_ready_stock td {
-                display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border: none; border-bottom: 1px solid #e0e0e0;
-            }
-            #table_raw_stock td:last-child, #table_ready_stock td:last-child { border-bottom: none; }
-            #table_raw_stock td input[type="number"], #table_ready_stock td input[type="number"] { width: 80px; text-align: right; }
-            #table_raw_stock td:nth-child(1):before { content: "Продукт:"; font-weight: bold; color: #555; }
-            body.dark-theme #table_raw_stock td:nth-child(1):before { color: #b0b0b0; }
-            #table_raw_stock td:nth-child(2):before { content: "Цена:"; font-weight: bold; color: #555; }
-            body.dark-theme #table_raw_stock td:nth-child(2):before { color: #b0b0b0; }
-            #table_raw_stock td:nth-child(3):before { content: "Остаток:"; font-weight: bold; color: #555; }
-            body.dark-theme #table_raw_stock td:nth-child(3):before { color: #b0b0b0; }
-            #table_ready_stock tr:nth-child(odd) td:nth-child(2):before, #table_ready_stock tr:nth-child(even) td:nth-child(2):before { content: "В Траке:"; font-weight: bold; color: #27ae60; margin-right: 10px; }
-            #table_ready_stock tr:nth-child(odd) td:nth-child(3):before, #table_ready_stock tr:nth-child(even) td:nth-child(3):before { content: "В Автодоме:"; font-weight: bold; color: #e67e22; margin-right: 10px; }
-        }
-    </style>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 <div class="container">
@@ -128,17 +20,17 @@
 
     <div class="tab-nav">
         <button class="tab-btn active" onclick="openTab('tab-settings', this)">⚙️ Настройки</button>
-        <button class="tab-btn" onclick="openTab('tab-inventory', this)"> Склад</button>
+        <button class="tab-btn" onclick="openTab('tab-inventory', this)">📦 Склад</button>
         <button class="tab-btn" onclick="openTab('tab-procurement', this)">🛒 Закупка</button>
-        <button class="tab-btn" onclick="openTab('tab-workstation', this)">👨‍🍳 Станция</button>
+        <button class="tab-btn" onclick="openTab('tab-workstation', this)">👨‍ Станция</button>
         <button class="tab-btn" onclick="openTab('tab-report', this)">📊 Отчет</button>
     </div>
 
-    <!-- Вкладка 1: Настройки и Меню -->
+    <!-- Вкладка 1: Настройки -->
     <div id="tab-settings" class="tab-content active">
         <h2>🎯 Логика работы бизнеса</h2>
         <div class="logic-select-box">
-            <select id="business_logic" onchange="switchBusinessLogic()">
+            <select id="business_logic">
                 <option value="1">1. Только Фудтрак (Лимит 50-100 кг)</option>
                 <option value="2">2. Фудтрак + Легковое авто (Доставка)</option>
                 <option value="3">3. Максимальная цепочка (Авто + Кемпер + Трак)</option>
@@ -159,10 +51,10 @@
         <h2>🛒 Выбор активного меню на смену</h2>
         <div id="menu_checkboxes" class="menu-container"></div>
         
-        <button class="btn-calc" onclick="calculateLogisticsCore()">🚀 РАССЧИТАТЬ СМЕНУ</button>
+        <button class="btn-calc" id="btn-calculate">🚀 РАССЧИТАТЬ СМЕНУ</button>
     </div>
 
-    <!-- Вкладка 2: Склад и Заготовки -->
+    <!-- Вкладка 2: Склад -->
     <div id="tab-inventory" class="tab-content">
         <h2>🥣 Текущие остатки готовых заготовок (в порциях)</h2>
         <table id="table_ready_stock">
@@ -178,23 +70,17 @@
                     <th>Продукт</th><th>Цена</th><th>Остаток</th>
                 </tr>
             </thead>
-            <tbody>
-               <tr><td>🥦 ОВОЩИ</td><td>$55</td><td><input type="number" id="stock_овощи" value="0"></td><td>🍚 РИС</td><td>$45</td><td><input type="number" id="stock_рис" value="0"></td></tr>
-               <tr><td> МЯСО</td><td>$500</td><td><input type="number" id="stock_мясо" value="0"></td><td>🍎 ФРУКТЫ</td><td>$55</td><td><input type="number" id="stock_фрукты" value="0"></td></tr>
-               <tr><td>🍬 САХАР</td><td>$45</td><td><input type="number" id="stock_сахар" value="0"></td><td>🌾 МУКА</td><td>$45</td><td><input type="number" id="stock_мука" value="0"></td></tr>
-               <tr><td> МОЛОКО</td><td>$55</td><td><input type="number" id="stock_молоко" value="0"></td><td>🥚 ЯЙЦО</td><td>$45</td><td><input type="number" id="stock_яйцо" value="0"></td></tr>
-               <tr><td>🐟 РЫБА</td><td id="label_fish_price">$400</td><td><input type="number" id="stock_рыба" value="0"></td><td>🧊 ЛЁД</td><td>$45</td><td><input type="number" id="stock_лёд" value="0"></td></tr>
-               <tr><td>🍺 ПИВО</td><td>$60</td><td><input type="number" id="stock_пиво" value="0"></td><td>🍷 ВИНО</td><td>$350</td><td><input type="number" id="stock_вино" value="0"></td></tr>
-            </tbody>
+            <tbody></tbody>
         </table>
-        <button onclick="syncStockToInventory()" style="width:100%; background:#16a085; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold; margin-bottom:10px;">🔄 Синхронизировать склад со станцией</button>
-        <button class="btn-save" onclick="saveToLocalStorage()"> Сохранить остатки</button>
-        <button class="btn-reset" onclick="resetAllFields()">🧹 Обнулить всё</button>
+        
+        <button class="btn-sync" id="btn-sync-stock"> Синхронизировать склад со станцией</button>
+        <button class="btn-save" id="btn-save-stock">💾 Сохранить остатки</button>
+        <button class="btn-reset" id="btn-reset-stock">🧹 Обнулить всё</button>
     </div>
 
     <!-- Вкладка 3: Закупка -->
     <div id="tab-procurement" class="tab-content">
-        <button onclick="calculateLogisticsCore()" style="width: 100%; background: #27ae60; color: white; border: none; padding: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; margin-bottom: 15px;">🔄 Пересчитать и показать закупку</button>
+        <button class="btn-calc" id="btn-recalculate" style="margin-bottom: 15px;">🔄 Пересчитать и показать закупку</button>
         
         <div id="error_box" class="error-card"></div>
         <div id="result_box" class="result-box" style="display:none;">
@@ -203,18 +89,18 @@
             <h3>🚛 2. Транспортный план</h3>
             <div id="res_transport_plan"></div>
             <div id="walk_stats" style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; font-size: 14px;"></div>
-            <h3>👨‍ 3. Загрузка Фудтрака</h3>
+            <h3>👨🍳 3. Загрузка Фудтрака</h3>
             <div id="res_truck_loading"></div>
             <h3>💰 4. Экономика смены (План)</h3>
             <div id="res_economy_block"></div>
         </div>
         <div id="no_calc_msg" style="text-align: center; padding: 40px; color: #7f8c8d;">
-            <h3>️ Данные отсутствуют</h3>
-            <p>Перейдите во вкладку "⚙️ Настройки", выберите меню и нажмите "РАССЧИТАТЬ СМЕНУ".</p>
+            <h3>⚠️ Данные отсутствуют</h3>
+            <p>Перейдите во вкладку "️ Настройки", выберите меню и нажмите "РАССЧИТАТЬ СМЕНУ".</p>
         </div>
     </div>
 
-    <!-- Вкладка 4: РАБОЧАЯ СТАНЦИЯ (Касса + Рецепты) -->
+    <!-- Вкладка 4: Станция -->
     <div id="tab-workstation" class="tab-content">
         <h2>🧾 Кассовый терминал</h2>
         <div class="pos-summary">
@@ -223,15 +109,14 @@
             <div><div style="font-size: 12px; opacity: 0.8;">Заказов</div><div style="font-size: 20px; font-weight: bold;" id="pos_shift_orders">0</div></div>
         </div>
 
-                <!-- Панель управления остатками -->
         <div id="current_stock_display"></div>
         
-        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-                <button onclick="initStockFromInventory(); showCurrentStock(); updatePOSAvailability();" style="flex: 1; min-width: 150px; background: #3498db; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">📥 Загрузить остатки со склада</button>
-                <button onclick="openRestockModal()" style="flex: 1; min-width: 150px; background: #e67e22; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;"> Догрузить из хранилища</button>
-                <button onclick="openPrepareModal()" style="flex: 1; min-width: 150px; background: #8e44ad; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">👨‍🍳 Приготовить заготовки</button>
-                <button onclick="openWasteModal()" style="flex: 1; min-width: 150px; background: #e74c3c; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">🗑️ Списать брак</button>
-       </div>
+        <div class="action-buttons">
+            <button class="btn-action btn-blue" id="btn-load-stock">📥 Загрузить остатки со склада</button>
+            <button class="btn-action btn-orange" id="btn-restock">🔄 Догрузить из хранилища</button>
+            <button class="btn-action btn-purple" id="btn-prepare">👨‍🍳 Приготовить заготовки</button>
+            <button class="btn-action btn-red" id="btn-waste">🗑️ Списать брак</button>
+        </div>
         
         <div id="cash_register_block">
             <strong style="display: block; margin-bottom: 8px; color: #2c3e50;">📌 Добавить в текущий заказ:</strong>
@@ -244,38 +129,26 @@
                 </div>
                 <div id="pos_current_items" style="margin-bottom: 15px; font-size: 14px;"></div>
                 <div style="background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
-                    <strong style="color: #d35400; display: block; margin-bottom: 5px;">‍🍳 ЗАДАНИЕ КУХНЕ (приготовить):</strong>
+                    <strong style="color: #d35400; display: block; margin-bottom: 5px;">👨‍🍳 ЗАДАНИЕ КУХНЕ:</strong>
                     <div id="pos_kitchen_ticket" style="font-size: 14px; line-height: 1.6;"></div>
                 </div>
-                <button onclick="completeCurrentOrder()" style="width: 100%; background: #27ae60; color: white; border: none; padding: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px;">✅ ПРОВЕСТИ ЗАКАЗ И ОТДАТЬ</button>
+                <button class="btn-complete" id="btn-complete-order">✅ ПРОВЕСТИ ЗАКАЗ И ОТДАТЬ</button>
             </div>
             
             <div style="margin-top: 15px; text-align: center;">
-                <button onclick="resetShiftData()" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">🔄 Завершить смену и обнулить кассу</button>
-            </div>
-        </div>
-
-        <!-- Секция рецептов внутри рабочей станции -->
-        <div class="recipes-section">
-            <h2>📖 Рецепты и цепочки приготовления</h2>
-            <button onclick="showFullRecipeChain()" style="width: 100%; background: #8e44ad; color: white; border: none; padding: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; margin-bottom: 15px;">🔄 Обновить цепочки для выбранного меню</button>
-            <div id="recipe_chain_box" style="display: none;">
-                <div id="recipe_chain_content"></div>
-            </div>
-            <div id="no_recipe_msg" style="text-align: center; padding: 20px; color: #7f8c8d;">
-                <p>Выберите блюда во вкладке "Настройки" и нажмите кнопку выше.</p>
+                <button class="btn-reset-shift" id="btn-reset-shift">🔄 Завершить смену и обнулить кассу</button>
             </div>
         </div>
     </div>
 
     <!-- Вкладка 5: Отчет -->
     <div id="tab-report" class="tab-content">
-        <h2> Итоговый отчет по смене</h2>
-        <div id="shift_report_block" style="padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; color: white;">
+        <h2>📊 Итоговый отчет по смене</h2>
+        <div id="shift_report_block" class="report-block">
             <div id="shift_report_content">
                 <p style="text-align: center; opacity: 0.8;">Проведите заказы в кассе на вкладке "Станция", чтобы сформировать отчет.</p>
             </div>
-            <button onclick="exportShiftReport()" style="margin-top: 15px; width: 100%; background: white; color: #764ba2; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">📤 Скопировать отчет для отправки</button>
+            <button class="btn-export-report" id="btn-export-report">📤 Скопировать отчет для отправки</button>
         </div>
     </div>
 
@@ -285,14 +158,23 @@
             <h3 id="sync_modal_title" style="margin-top: 0; color: #2c3e50;"></h3>
             <div id="sync_modal_content"></div>
             <div style="margin-top: 15px; text-align: right;">
-                <button onclick="closeSyncModal()" style="background: #95a5a6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Закрыть</button>
+                <button class="btn-close-modal" onclick="closeSyncModal()">Закрыть</button>
             </div>
         </div>
     </div>
 </div>
 
-<script src="menu_database.js"></script>
-<script src="core.js"></script>
-<script src="logistics.js"></script>
+<!-- Подключение модулей в правильном порядке -->
+<script src="core/EventBus.js"></script>
+<script src="core/Storage.js"></script>
+<script src="core/Store.js"></script>
+<script src="data/constants.js"></script>
+<script src="data/menu.js"></script>
+<script src="features/Settings.js"></script>
+<script src="features/Inventory.js"></script>
+<script src="features/Procurement.js"></script>
+<script src="features/Workstation.js"></script>
+<script src="features/Report.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
