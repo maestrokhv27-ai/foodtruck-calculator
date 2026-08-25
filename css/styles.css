@@ -303,4 +303,194 @@ td input[type="number"] {
     font-weight: bold;
 }
 
-.btn-blue {
+.btn-blue { background: #3498db; }
+.btn-orange { background: #e67e22; }
+.btn-purple { background: #8e44ad; }
+.btn-red { background: #e74c3c; }
+
+.btn-complete {
+    width: 100%;
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.btn-reset-shift {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-export-report {
+    margin-top: 15px;
+    width: 100%;
+    background: white;
+    color: #764ba2;
+    border: none;
+    padding: 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-close-modal {
+    background: #95a5a6;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* ==================== РЕЗУЛЬТАТЫ ==================== */
+.result-box { 
+    background-color: #f4f9f4; 
+    border: 1px solid #27ae60; 
+    border-left: 6px solid #27ae60; 
+    padding: 20px; 
+    border-radius: 6px; 
+    margin-top: 20px; 
+}
+
+.result-box h3 { 
+    color: #27ae60; 
+    margin-top: 0; 
+    border-bottom: 1px solid #e2f0d9; 
+    padding-bottom: 5px; 
+}
+
+.error-card { 
+    background-color: #fdf2f2; 
+    border: 1px solid #f8b4b4; 
+    border-left: 6px solid #e74c3c; 
+    color: #9b1c1c; 
+    padding: 15px; 
+    margin-top: 20px; 
+    border-radius: 6px; 
+    display: none; 
+}
+
+/* ==================== POS ==================== */
+.pos-summary { 
+    display: flex; 
+    justify-content: space-between; 
+    background: #2c3e50; 
+    color: white; 
+    padding: 15px; 
+    border-radius: 6px; 
+    margin-bottom: 15px; 
+    flex-wrap: wrap; 
+    gap: 10px; 
+}
+
+.pos-summary div { 
+    text-align: center; 
+    flex: 1; 
+}
+
+.pos-menu-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
+    gap: 8px; 
+    margin-bottom: 15px; 
+}
+
+.pos-item { 
+    background: white; 
+    border: 1px solid #ddd; 
+    border-radius: 6px; 
+    padding: 8px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 5px; 
+    transition: opacity 0.2s;
+}
+
+/* ==================== ОТЧЁТ ==================== */
+.report-block {
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    color: white;
+}
+
+/* ==================== МОДАЛКА ==================== */
+.modal-overlay { 
+    display: none; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: rgba(0,0,0,0.7); 
+    z-index: 9999; 
+    justify-content: center; 
+    align-items: center; 
+}
+
+.modal-content { 
+    background: white; 
+    padding: 25px; 
+    border-radius: 10px; 
+    max-width: 500px; 
+    width: 90%; 
+    max-height: 80vh; 
+    overflow-y: auto; 
+}
+
+/* ==================== ТЁМНАЯ ТЕМА ==================== */
+body.dark-theme { background-color: #1a1a2e; color: #e0e0e0; }
+body.dark-theme .container { background: #16213e; }
+body.dark-theme .header { background: #0f3460; }
+body.dark-theme .tab-nav { background: #0f3460; }
+body.dark-theme .tab-btn { color: #b0b0b0; }
+body.dark-theme .tab-btn.active { color: #27ae60; background: rgba(39, 174, 96, 0.1); }
+body.dark-theme .logic-select-box { background: #0f3460; }
+body.dark-theme .config-grid { background: #1a1a2e; border-color: #0f3460; }
+body.dark-theme .config-group label { color: #b0b0b0; }
+body.dark-theme .config-group input { background: #16213e; color: #e0e0e0; border-color: #0f3460; }
+body.dark-theme .menu-container { background: #16213e; border-color: #0f3460; }
+body.dark-theme .menu-item:hover { background: #0f3460; }
+body.dark-theme table { background: #16213e; }
+body.dark-theme th { background-color: #0f3460; }
+body.dark-theme td { border-color: #0f3460; color: #e0e0e0; }
+body.dark-theme td input[type="number"] { background: #1a1a2e; color: #e0e0e0; border-color: #0f3460; }
+body.dark-theme .result-box { background-color: #0f3460; border-color: #27ae60; }
+body.dark-theme .modal-content { background: #16213e; color: #e0e0e0; }
+body.dark-theme .pos-item { background: #1a1a2e; border-color: #0f3460; color: #e0e0e0; }
+
+/* ==================== АДАПТИВНОСТЬ ==================== */
+@media screen and (max-width: 768px) {
+    .tab-btn { font-size: 12px; padding: 12px 8px; min-width: 100px; }
+    
+    #table_raw_stock, #table_raw_stock thead, #table_raw_stock tbody, #table_raw_stock tr,
+    #table_ready_stock, #table_ready_stock thead, #table_ready_stock tbody, #table_ready_stock tr {
+        display: block; width: 100%;
+    }
+    #table_raw_stock thead, #table_ready_stock thead { display: none; }
+    #table_raw_stock tr, #table_ready_stock tr {
+        margin-bottom: 15px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 12px;
+    }
+    body.dark-theme #table_raw_stock tr, body.dark-theme #table_ready_stock tr { background: #1a1a2e; border-color: #0f3460; }
+    #table_raw_stock td, #table_ready_stock td {
+        display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border: none; border-bottom: 1px solid #e0e0e0;
+    }
+    #table_raw_stock td:last-child, #table_ready_stock td:last-child { border-bottom: none; }
+    #table_raw_stock td input[type="number"], #table_ready_stock td input[type="number"] { width: 80px; text-align: right; }
+    #table_raw_stock td:nth-child(1):before { content: "Продукт:"; font-weight: bold; color: #555; }
+    body.dark-theme #table_raw_stock td:nth-child(1):before { color: #b0b0b0; }
+    #table_raw_stock td:nth-child(2):before { content: "Цена:"; font-weight: bold; color: #555; }
+    body.dark-theme #table_raw_stock td:nth-child(2):before { color: #b0b0b0; }
+    #table_raw_stock td:nth-child(3):before { content: "Остаток:"; font-weight: bold; color: #555; }
+    body.dark-theme #table_raw_stock td:nth-child(3):before { color: #b0b0b0; }
+}
