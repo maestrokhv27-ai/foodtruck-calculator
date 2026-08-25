@@ -1,15 +1,23 @@
 // ==================== БЕЗОПАСНЫЙ LOCALSTORAGE ====================
 
 const Storage = {
-    get(key, defaultValue = null) {
+get(key, defaultValue = null) {
+    try {
+        const item = localStorage.getItem(key);
+        if (!item) return defaultValue;
+        
+        // Пробуем распарсить как JSON
         try {
-            const item = localStorage.getItem(key);
-            return item ? JSON.parse(item) : defaultValue;
+            return JSON.parse(item);
         } catch (e) {
-            console.error(`Ошибка чтения ${key}:`, e);
-            return defaultValue;
+            // Если не JSON, возвращаем как есть
+            return item;
         }
-    },
+    } catch (e) {
+        console.error(`Ошибка чтения ${key}:`, e);
+        return defaultValue;
+    }
+},
     
     set(key, value) {
         try {
