@@ -81,104 +81,133 @@ const Inventory = {
     
     // УМНАЯ функция: определяет что показывать в заготовках
     renderPrepStock() {
-        if (!this.prepStockTable) return;
-        
-        const prepStock = Store.get('prepStock');
-        const logic = Store.get('businessLogic');
-        const showRV = logic === '3' || logic === '4';
-        
-        const selectedDishes = Store.get('selectedDishes');
-        const itemsInTruck = new Set(); // Что должно быть в фудтраке
-        const itemsInRV = new Set();    // Что должно быть в автодоме
-        
-        // Анализируем ВСЕ выбранные блюда
-        if (window.DISH_DATABASE) {
-            DISH_DATABASE.forEach((dish, index) => {
-                if (!selectedDishes[index]) return;
-                
-                // Для каждого компонента блюда определяем куда его класть
-                for (let comp in dish.recipe) {
-                    const isPrepItem = PREP_ITEMS.includes(comp);
-                    const isBaseIngredient = BASE_INGREDIENTS.includes(comp);
-                    
-                    // Проверяем, является ли компонент заготовкой или сырьём
-                    if (isPrepItem) {
-                        // Это заготовка → должна быть в фудтраке
-                        itemsInTruck.add(comp);
-                    } else if (isBaseIngredient) {
-                        // Это базовое сырьё → проверяем, используется ли напрямую
-                        // Если это компонент блюда (а не заготовки) → нужен в фудтраке
-                        itemsInTruck.add(comp);
-                    }
-                }
-            });
-        }
-        
-        // Создаём заголовок таблицы
-        const thead = this.prepStockTable.querySelector('thead');
-        if (thead) {
-            thead.innerHTML = `
-                <tr>
-                    <th>Заготовка/Сырьё</th>
-                    <th>🚚 Фудтрак</th>
-                    ${showRV ? '<th>🏠 Автодом</th>' : ''}
-                    <th>Заготовка/Сырьё</th>
-                    <th>🚚 Фудтрак</th>
-                    ${showRV ? '<th>🏠 Автодом</th>' : ''}
-                </tr>
-            `;
-        }
-        
-        // Если ничего не выбрано
-        if (itemsInTruck.size === 0) {
-            this.prepStockTable.innerHTML = '<tr><td colspan="' + (showRV ? '6' : '4') + '" style="text-align: center; color: #7f8c8d; padding: 20px;">Выберите блюда во вкладке "Настройки", чтобы увидеть нужные компоненты</td></tr>';
-            return;
-        }
-        
-        // Создаём строки таблицы
-        const rows = [];
-        const itemsArray = Array.from(itemsInTruck).sort();
-        
-        for (let i = 0; i < itemsArray.length; i += 2) {
-            const item1 = itemsArray[i];
-            const item2 = itemsArray[i + 1];
+    if (!this.prepStockTable) return;
+    
+    const prepStock = Store.get('prepStock');
+    const logic = Store.get('businessLogic');
+    const showRV = logic === '3' || logic === '4';
+    
+    const selectedDishes = Store.get('selectedDishes');
+    const itemsInTruck = new Set();
+    const itemsInRV = new Set();
+    
+    // Собираем ВСЕ заготовки, которые нужны для выбранных блюд
+    const allNeededPreps = new Set();
+    const directBaseIngredients = new Set();
+    
+    if (window.DISH_DATABASE) {
+        DISH_DATABASE.forEach((dish, index) => {
+            if (!selectedDishes[index]) return;
             
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${COMPONENT_NAMES[item1] || item1}</td>
-                <td><input type="number" class="prep-input" id="prep_${item1}_truck" 
-                           value="${prepStock.truck[item1] || 0}" data-item="${item1}" data-location="truck"></td>
-                ${showRV ? `<td><input type="number" class="prep-input" id="prep_${item1}_rv" 
-                           value="${prepStock.rvStorage[item1] || 0}" data-item="${item1}" data-location="rvStorage"></td>` : ''}
-                ${item2 ? `<td>${COMPONENT_NAMES[item2] || item2}</td>` : '<td></td>'}
-                ${item2 ? `<td><input type="number" class="prep-input" id="prep_${item2}_truck" 
-                           value="${prepStock.truck[item2] || 0}" data-item="${item2}" data-location="truck"></td>` : '<td></td>'}
-                ${item2 && showRV ? `<td><input type="number" class="prep-input" id="prep_${item2}_rv" 
-                           value="${prepStock.rvStorage[item2] || 0}" data-item="${item2}" data-location="rvStorage"></td>` : '<td></td>'}
-            `;
-            rows.push(row);
+            for (let comp in dish.recipe) {
+                const isPrepItem = PREP_ITEMS.includes(comp);
+                const isBaseIngredient = BASE_INGREDIENTS.includes(comp);
+                
+                if (isPrepItem) {
+                    // Это заготовка → нужна в фудтраке
+                    allNeededPreps.add(comp);
+                } else if (isBaseIngredient) {
+                    // Проверяем: это сырьё для заготовки или для блюда?
+                    // Если comp используется напрямую в dish (а не для приготовления другой заготовки)
+                    // → нужно в фудтраке
+                    directBaseIngredients.add(comp);
+                }
+            }
+        });
+    }
+    
+    // Теперь определяем, какие базовые ингредиенты нужны именно в фудтраке
+    // (а не для приготовления заготовок в автодоме)
+    directBaseIngredients.forEach(comp => {
+        // Проверяем: используется ли это сырьё для приготовления заготовок?
+        let usedForPrep = false;
+        for (let prep of allNeededPreps) {
+            const prepRecipe = PREP_RECIPES[prep];
+            if (prepRecipe && prepRecipe[comp]) {
+                usedForPrep = true;
+                break;
+            }
         }
         
-        // Отрисовываем таблицу
-        this.prepStockTable.innerHTML = '';
-        if (thead) this.prepStockTable.appendChild(thead);
+        // Если НЕ используется для заготовок → нужен в фудтраке
+        if (!usedForPrep) {
+            itemsInTruck.add(comp);
+        } else {
+            // Если используется для заготовок → нужен в автодоме
+            itemsInRV.add(comp);
+        }
+    });
+    
+    // Добавляем все заготовки в фудтрак
+    allNeededPreps.forEach(prep => itemsInTruck.add(prep));
+    
+    // Создаём заголовок таблицы
+    const thead = this.prepStockTable.querySelector('thead');
+    if (thead) {
+        thead.innerHTML = `
+            <tr>
+                <th>Компонент</th>
+                <th>🚚 Фудтрак</th>
+                ${showRV ? '<th>🏠 Автодом</th>' : ''}
+                <th>Компонент</th>
+                <th>🚚 Фудтрак</th>
+                ${showRV ? '<th> Автодом</th>' : ''}
+            </tr>
+        `;
+    }
+    
+    // Объединяем всё
+    const allItems = new Set([...itemsInTruck, ...itemsInRV]);
+    
+    if (allItems.size === 0) {
+        this.prepStockTable.innerHTML = '<tr><td colspan="' + (showRV ? '6' : '4') + '" style="text-align: center; color: #7f8c8d; padding: 20px;">Выберите блюда во вкладке "Настройки"</td></tr>';
+        return;
+    }
+    
+    // Создаём строки
+    const rows = [];
+    const itemsArray = Array.from(allItems).sort();
+    
+    for (let i = 0; i < itemsArray.length; i += 2) {
+        const item1 = itemsArray[i];
+        const item2 = itemsArray[i + 1];
+        const inTruck1 = itemsInTruck.has(item1);
+        const inRV1 = itemsInRV.has(item1);
+        const inTruck2 = item2 ? itemsInTruck.has(item2) : false;
+        const inRV2 = item2 ? itemsInRV.has(item2) : false;
         
-        const tbody = this.prepStockTable.querySelector('tbody') || document.createElement('tbody');
-        rows.forEach(row => tbody.appendChild(row));
-        this.prepStockTable.appendChild(tbody);
-        
-        // Подписка на изменения
-        this.prepStockTable.querySelectorAll('.prep-input').forEach(input => {
-            input.addEventListener('input', (e) => {
-                const item = e.target.dataset.item;
-                const location = e.target.dataset.location;
-                const value = parseInt(e.target.value) || 0;
-                const prepStock = Store.get('prepStock');
-                prepStock[location][item] = value;
-                Store.set('prepStock', prepStock);
-            });
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${COMPONENT_NAMES[item1] || item1}</td>
+            <td>${inTruck1 ? `<input type="number" class="prep-input" id="prep_${item1}_truck" value="${prepStock.truck[item1] || 0}" data-item="${item1}" data-location="truck">` : '<span style="color:#bdc3c7;">—</span>'}</td>
+            ${showRV ? `<td>${inRV1 ? `<input type="number" class="prep-input" id="prep_${item1}_rv" value="${prepStock.rvStorage[item1] || 0}" data-item="${item1}" data-location="rvStorage">` : '<span style="color:#bdc3c7;">—</span>'}</td>` : ''}
+            ${item2 ? `<td>${COMPONENT_NAMES[item2] || item2}</td>` : '<td></td>'}
+            ${item2 ? `<td>${inTruck2 ? `<input type="number" class="prep-input" id="prep_${item2}_truck" value="${prepStock.truck[item2] || 0}" data-item="${item2}" data-location="truck">` : '<span style="color:#bdc3c7;">—</span>'}</td>` : '<td></td>'}
+            ${item2 && showRV ? `<td>${inRV2 ? `<input type="number" class="prep-input" id="prep_${item2}_rv" value="${prepStock.rvStorage[item2] || 0}" data-item="${item2}" data-location="rvStorage">` : '<span style="color:#bdc3c7;">—</span>'}</td>` : '<td></td>'}
+        `;
+        rows.push(row);
+    }
+    
+    // Отрисовка
+    this.prepStockTable.innerHTML = '';
+    if (thead) this.prepStockTable.appendChild(thead);
+    
+    const tbody = this.prepStockTable.querySelector('tbody') || document.createElement('tbody');
+    rows.forEach(row => tbody.appendChild(row));
+    this.prepStockTable.appendChild(tbody);
+    
+    // Подписка
+    this.prepStockTable.querySelectorAll('.prep-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const item = e.target.dataset.item;
+            const location = e.target.dataset.location;
+            const value = parseInt(e.target.value) || 0;
+            const prepStock = Store.get('prepStock');
+            prepStock[location][item] = value;
+            Store.set('prepStock', prepStock);
         });
-    },
+    });
+},
     
     save() {
         alert('💾 Данные сохранены!');
