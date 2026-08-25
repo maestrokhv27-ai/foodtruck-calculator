@@ -945,6 +945,14 @@ completeCurrentOrder = function() {
     updatePOSAvailability();
     showCurrentStock();
 };
+    
+    originalCompleteOrder();
+    
+    const result = consumeStock(currentOrder);
+    showStockNotifications(result);
+    updatePOSAvailability();
+    showCurrentStock();
+};
 // ==================== СИНХРОНИЗАЦИЯ СКЛАДА ====================
 function syncStockToInventory() {
     const stock = getStockData();
@@ -978,4 +986,141 @@ function syncStockToInventory() {
     });
     
     alert("✅ Склад синхронизирован со станцией!\nТеперь нажмите '💾 Сохранить остатки' чтобы зафиксировать.");
+}
+// ==================== СПИСАНИЕ БРАКА/ОТХОДОВ ====================
+let wasteStats = { total: 0, items: [] };
+
+function loadWasteStats() {
+    const saved = localStorage.getItem("waste_stats");
+    if (saved) wasteStats = JSON.parse(saved);
+}
+
+function saveWasteStats() {
+    localStorage.setItem("waste_stats", JSON.stringify(wasteStats));
+}
+
+function openWasteModal() {
+    const stock = getStockData();
+    loadWasteStats();
+    
+    let html = '<div style="max-height: 60vh; overflow-y: auto;">';
+    html += '<p style="color: #7f8c8d; font-size: 14px;">Выберите что списать (сырьё или заготовки):</p>';
+    
+    // Сырьё из фудтрака
+    const rawItems = Object.keys(stock.truck).filter(k => 
+        ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"].includes(k)
+    );
+    
+    if (rawItems.length > 0) {
+        html += '<h4 style="margin: 15px 0 8px 0; color: #e74c3c;"> Сырьё в фудтраке:</h4>';
+        rawItems.forEach(comp => {
+            const name = COMPONENT_NAMES[comp] || comp;
+            const qty = stock.truck[comp] || 0;
+            if (qty <= 0) return;
+            const price = getRawPrice(comp);
+            html += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #fdf2f2; border-radius: 4px; margin-bottom: 5px;">`;
+            html += `<span>${name} (${qty} шт.) — $${price}/шт</span>`;
+            html += `<div style="display: flex; gap: 5px;">`;
+            html += `<input type="number" id="waste_${comp}" value="1" min="1" max="${qty}" style="width: 60px; padding: 4px;">`;
+            html += `<button onclick="doWaste('${comp}', ${price})" style="background: #e74c3c; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">🗑️</button>`;
+            html += `</div></div>`;
+        });
+    }
+    
+    // Заготовки из фудтрака
+    const prepItems = Object.keys(stock.truck).filter(k => 
+        !["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"].includes(k)
+    );
+    
+    if (prepItems.length > 0) {
+        html += '<h4 style="margin: 15px 0 8px 0; color: #e67e22;">🍳 Заготовки в фудтраке:</h4>';
+        prepItems.forEach(comp => {
+            const name = COMPONENT_NAMES[comp] || comp;
+            const qty = stock.truck[comp] || 0;
+            if (qty <= 0) return;
+            const price = getPrepPrice(comp);
+            html += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #fff3cd; border-radius: 4px; margin-bottom: 5px;">`;
+            html += `<span>${name} (${qty} шт.) — $${price}/шт</span>`;
+            html += `<div style="display: flex; gap: 5px;">`;
+            html += `<input type="number" id="waste_${comp}" value="1" min="1" max="${qty}" style="width: 60px; padding: 4px;">`;
+            html += `<button onclick="doWaste('${comp}', ${price})" style="background: #e74c3c; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">🗑️</button>`;
+            html += `</div></div>`;
+        });
+    }
+    
+    // Статистика брака за смену
+    if (wasteStats.items.length > 0) {
+        html += '<hr style="margin: 15px 0;">';
+        html += '<h4 style="margin: 0 0 8px 0; color: #7f8c8d;">📊 Списание за смену:</h4>';
+        html += '<div style="background: #f8f9fa; padding: 10px; border-radius: 4px;">';
+        wasteStats.items.forEach(item => {
+            html += `<div style="font-size: 13px; margin-bottom: 3px;">• ${item.name}: ${item.qty} шт. — $${item.cost}</div>`;
+        });
+        html += `<div style="font-weight: bold; margin-top: 8px; color: #e74c3c;">Итого убыток: $${wasteStats.total}</div>`;
+        html += '</div>';
+    }
+    
+    html += '</div>';
+    
+    const modal = document.getElementById("sync_modal");
+    document.getElementById("sync_modal_title").innerText = "🗑️ Списать брак/отходы";
+    document.getElementById("sync_modal_content").innerHTML = html;
+    modal.style.display = "flex";
+}
+
+function getRawPrice(comp) {
+    const prices = {
+        "овощи": 55, "рис": 45, "мясо": 500, "фрукты": 55,
+        "сахар": 45, "мука": 45, "молоко": 55, "яйцо": 45,
+        "рыба": 400, "лёд": 45, "пиво": 60, "вино": 350
+    };
+    return prices[comp] || 0;
+}
+
+function getPrepPrice(comp) {
+    // Себестоимость заготовки (упрощённо)
+    const prices = {
+        "вареный_рис": 45,
+        "картофельное_пюре": 110,
+        "мясной_фарш": 500,
+        "рыбный_фарш": 400,
+        "хлеб": 90,
+        "макароны": 90,
+        "сыр": 55,
+        "котлета": 555,
+        "рыбная_котлета": 455,
+        "стейк_заг": 610,
+        "рыба_фрукт_заг": 510,
+        "масло": 55,
+        "тесто": 90,
+        "карамель": 45
+    };
+    return prices[comp] || 0;
+}
+
+function doWaste(comp, pricePerUnit) {
+    const input = document.getElementById(`waste_${comp}`);
+    const qty = parseInt(input.value) || 0;
+    if (qty <= 0) return;
+    
+    const stock = getStockData();
+    if (!stock.truck[comp] || stock.truck[comp] < qty) {
+        alert(`❌ Недостаточно ${comp}! Осталось: ${stock.truck[comp] || 0}`);
+        return;
+    }
+    
+    const cost = qty * pricePerUnit;
+    stock.truck[comp] -= qty;
+    saveStockData(stock);
+    
+    // Записываем в статистику
+    const name = COMPONENT_NAMES[comp] || comp;
+    wasteStats.items.push({ name, qty, cost, time: new Date().toLocaleTimeString() });
+    wasteStats.total += cost;
+    saveWasteStats();
+    
+    alert(`️ Списано: ${name} x${qty} (убыток: $${cost})`);
+    openWasteModal();
+    showCurrentStock();
+    updatePOSAvailability();
 }
