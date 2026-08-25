@@ -5,8 +5,25 @@ let currentOrder = {};
 let shiftStats = { revenue: 0, profit: 0, orders: 0 };
 let wasteStats = { total: 0, items: [] };
 
+// Проверка что база блюд загружена
+if (typeof DISH_DATABASE === 'undefined') {
+    console.error('⚠️ DISH_DATABASE не загружена! Проверьте что menu_database.js загружен перед logistics.js');
+    var DISH_DATABASE = [];
+}
+if (typeof COMPONENT_NAMES === 'undefined') {
+    var COMPONENT_NAMES = {};
+}
+if (typeof CATEGORY_NAMES === 'undefined') {
+    var CATEGORY_NAMES = {};
+}
+
 // ==================== ОСНОВНОЙ РАСЧЁТ ====================
 function calculateLogisticsCore() {
+    if (!DISH_DATABASE || DISH_DATABASE.length === 0) {
+        alert('⚠️ База блюд не загружена! Обновите страницу.');
+        return;
+    }
+
     const getVal = (id, def) => {
         const el = document.getElementById(id);
         return el ? (parseFloat(el.value) || def) : def;
@@ -193,7 +210,7 @@ function calculateLogisticsCore() {
     if (shoppingList) shoppingList.innerHTML = inf;
 
     let trips = Math.ceil(w / r);
-    let tHtml = `<p>⚖️ Вес сырья для закупки: <strong>${w.toFixed(1)} кг</strong> (Лимит транспорта: ${r} кг).</p>`;
+    let tHtml = `<p>️ Вес сырья для закупки: <strong>${w.toFixed(1)} кг</strong> (Лимит транспорта: ${r} кг).</p>`;
     
     if (l === "1" && w > r) {
         if (errorBox) {
@@ -268,6 +285,11 @@ function calculateLogisticsCore() {
 
 // ==================== ЦЕПОЧКА ПРИГОТОВЛЕНИЯ ====================
 function showFullRecipeChain() {
+    if (!DISH_DATABASE || DISH_DATABASE.length === 0) {
+        alert('⚠️ База блюд не загружена!');
+        return;
+    }
+
     const selectedDishes = [];
     DISH_DATABASE.forEach((dish, idx) => {
         const el = document.getElementById(`dish_${idx}`);
@@ -363,6 +385,8 @@ function showComponentChain(component, qty, level) {
 
 // ==================== POS-ТЕРМИНАЛ ====================
 function initPOS() {
+    if (!DISH_DATABASE || DISH_DATABASE.length === 0) return;
+    
     const savedShift = localStorage.getItem("shift_stats");
     if (savedShift) shiftStats = JSON.parse(savedShift);
     updateShiftDisplay();
@@ -439,7 +463,7 @@ function renderActiveOrder() {
     if (totalEl) totalEl.innerText = "$" + currentTotal.toLocaleString();
 
     let ticketHtml = '<div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #f39c12; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);">';
-    ticketHtml += '<div style="font-size: 20px; font-weight: bold; color: #d35400; margin-bottom: 15px; text-align: center;">🍳 ЧЕК КУХНИ</div>';
+    ticketHtml += '<div style="font-size: 20px; font-weight: bold; color: #d35400; margin-bottom: 15px; text-align: center;"> ЧЕК КУХНИ</div>';
     
     indices.forEach(idxStr => {
         const idx = parseInt(idxStr);
@@ -508,10 +532,12 @@ function completeCurrentOrder() {
     updateShiftReport();
 
     currentOrder = {};
-    DISH_DATABASE.forEach((dish, idx) => {
-        const qtyEl = document.getElementById(`pos_qty_${idx}`);
-        if (qtyEl) qtyEl.innerText = "0";
-    });
+    if (DISH_DATABASE) {
+        DISH_DATABASE.forEach((dish, idx) => {
+            const qtyEl = document.getElementById(`pos_qty_${idx}`);
+            if (qtyEl) qtyEl.innerText = "0";
+        });
+    }
     
     renderActiveOrder();
 }
@@ -602,6 +628,8 @@ function saveStockData(data) {
 }
 
 function initStockFromInventory() {
+    if (!DISH_DATABASE) return;
+    
     const logic = document.getElementById("business_logic").value;
     const stock = getStockData();
     
@@ -725,6 +753,8 @@ function showStockNotifications(result) {
 }
 
 function updatePOSAvailability() {
+    if (!DISH_DATABASE) return;
+    
     const stock = getStockData();
     DISH_DATABASE.forEach((dish, idx) => {
         const qtyEl = document.getElementById(`pos_qty_${idx}`);
@@ -829,7 +859,7 @@ function showCurrentStock() {
     }
     
     let html = '<div style="background: #e8f4f8; border-left: 4px solid #2980b9; padding: 12px; border-radius: 6px; margin-bottom: 15px;">';
-    html += '<strong style="color: #2c3e50;">📦 Остатки в фудтраке:</strong>';
+    html += '<strong style="color: #2c3e50;"> Остатки в фудтраке:</strong>';
     html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 10px;">';
     
     for (let comp in stock.truck) {
@@ -916,7 +946,7 @@ function openPrepareModal() {
         html += `<span>${name} (сейчас: ${stock.truck[comp] || 0})</span>`;
         html += `<div style="display: flex; gap: 5px;">`;
         html += `<input type="number" id="prepare_${comp}" value="10" min="1" style="width: 60px; padding: 4px;">`;
-        html += `<button onclick="doPrepare('${comp}')" style="background: #8e44ad; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">👨‍🍳</button>`;
+        html += `<button onclick="doPrepare('${comp}')" style="background: #8e44ad; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">‍🍳</button>`;
         html += `</div></div>`;
     });
     
@@ -1016,7 +1046,7 @@ function openWasteModal() {
     );
     
     if (rawItems.length > 0) {
-        html += '<h4 style="margin: 15px 0 8px 0; color: #e74c3c;">🥩 Сырьё в фудтраке:</h4>';
+        html += '<h4 style="margin: 15px 0 8px 0; color: #e74c3c;"> Сырьё в фудтраке:</h4>';
         rawItems.forEach(comp => {
             const name = COMPONENT_NAMES[comp] || comp;
             const qty = stock.truck[comp] || 0;
