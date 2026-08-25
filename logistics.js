@@ -599,37 +599,55 @@ function saveStockData(data) {
 }
 
 // Инициализация остатков из вкладки "Склад"
+// Инициализация остатков из вкладки "Склад"
 function initStockFromInventory() {
     const logic = document.getElementById("business_logic").value;
     const stock = getStockData();
     
-    // Базовое сырьё
-    const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба"];
+    // Список базового сырья
+    const rawIds = ["овощи", "рис", "мясо", "фрукты", "сахар", "мука", "молоко", "яйцо", "рыба", "лёд", "пиво", "вино"];
+    
     rawIds.forEach(id => {
         const el = document.getElementById(`stock_${id}`);
         if (el) {
             const val = parseInt(el.value) || 0;
+            
             if (logic === "1") {
+                // Режим 1: Только фудтрак → всё сырьё в фудтраке
                 stock.truck[id] = val;
+                stock.rv_storage[id] = 0;
+                stock.rv_cabinet[id] = 0;
             } else if (logic === "2") {
-                stock.truck[id] = Math.floor(val / 2);
-                stock.rv_storage[id] = val - Math.floor(val / 2);
-            } else {
-                stock.truck[id] = Math.floor(val / 3);
-                stock.rv_storage[id] = Math.floor(val / 3);
-                stock.rv_cabinet[id] = val - Math.floor(val / 3) - Math.floor(val / 3);
+                // Режим 2: Фудтрак + Легковое авто (НЕТ автодома)
+                // Сырьё в багажнике авто, заготовки в фудтраке
+                stock.truck[id] = 0;
+                stock.rv_storage[id] = val; // В багажнике легкового авто
+                stock.rv_cabinet[id] = 0;   // Автодома нет
+            } else if (logic === "3") {
+                // Режим 3: Фудтрак + Авто + Автодом
+                // Сырьё в автодоме (шкаф + багажник)
+                stock.truck[id] = 0;
+                stock.rv_storage[id] = Math.floor(val / 2); // В багажнике автодома
+                stock.rv_cabinet[id] = val - Math.floor(val / 2); // В шкафу автодома
+            } else if (logic === "4") {
+                // Режим 4: Фудтрак + Автодом (НЕТ легкового авто)
+                // Сырьё в автодоме (шкаф + багажник)
+                stock.truck[id] = 0;
+                stock.rv_storage[id] = Math.floor(val / 2); // В багажнике автодома
+                stock.rv_cabinet[id] = val - Math.floor(val / 2); // В шкафу автодома
             }
         }
     });
     
-    // Заготовки
+    // Заготовки распределяем по полям ввода
     document.querySelectorAll(".ready-input").forEach(el => {
         const val = parseInt(el.value) || 0;
         const id = el.id.replace("ready_", "").replace("_трак", "").replace("_авд", "");
+        
         if (el.id.includes("_трак")) {
-            stock.truck[id] = val;
+            stock.truck[id] = val; // В фудтраке
         } else if (el.id.includes("_авд")) {
-            stock.rv_storage[id] = val;
+            stock.rv_storage[id] = val; // В резерве автодома
         }
     });
     
