@@ -8,22 +8,31 @@ const Workstation = {
     },
     
     cacheElements() {
-        this.posGrid = document.getElementById('pos_menu_grid');
-        this.orderBlock = document.getElementById('pos_active_order_block');
-        this.orderItems = document.getElementById('pos_current_items');
-        this.orderTotal = document.getElementById('pos_current_total');
-        this.kitchenTicket = document.getElementById('pos_kitchen_ticket');
-        this.stockDisplay = document.getElementById('current_stock_display');
-        this.revenueEl = document.getElementById('pos_shift_revenue');
-        this.profitEl = document.getElementById('pos_shift_profit');
-        this.ordersEl = document.getElementById('pos_shift_orders');
-        this.completeBtn = document.querySelector('[onclick="completeCurrentOrder"]');
-        this.resetBtn = document.querySelector('[onclick="resetShiftData"]');
-        this.loadStockBtn = document.querySelector('[onclick*="initStockFromInventory"]');
-        this.restockBtn = document.querySelector('[onclick*="openRestockModal"]');
-        this.prepareBtn = document.querySelector('[onclick*="openPrepareModal"]');
-        this.wasteBtn = document.querySelector('[onclick*="openWasteModal"]');
-    },
+    this.posGrid = document.getElementById('pos_menu_grid');
+    this.orderBlock = document.getElementById('pos_active_order_block');
+    this.orderItems = document.getElementById('pos_current_items');
+    this.orderTotal = document.getElementById('pos_current_total');
+    this.kitchenTicket = document.getElementById('pos_kitchen_ticket');
+    this.stockDisplay = document.getElementById('current_stock_display');
+    this.revenueEl = document.getElementById('pos_shift_revenue');
+    this.profitEl = document.getElementById('pos_shift_profit');
+    this.ordersEl = document.getElementById('pos_shift_orders');
+    
+    // Ищем кнопку по ID или по классу
+    this.completeBtn = document.getElementById('btn_complete_order') || 
+                       document.querySelector('.btn-complete') ||
+                       document.querySelector('[onclick*="complete"]');
+    this.resetBtn = document.querySelector('[onclick*="reset"]') ||
+                    document.getElementById('btn_reset_shift');
+    this.loadStockBtn = document.querySelector('[onclick*="initStock"]') ||
+                        document.getElementById('btn_load_stock');
+    this.restockBtn = document.querySelector('[onclick*="openRestock"]') ||
+                      document.getElementById('btn_restock');
+    this.prepareBtn = document.querySelector('[onclick*="openPrepare"]') ||
+                      document.getElementById('btn_prepare');
+    this.wasteBtn = document.querySelector('[onclick*="openWaste"]') ||
+                    document.getElementById('btn_waste');
+},
     
     bindEvents() {
         var self = this;
