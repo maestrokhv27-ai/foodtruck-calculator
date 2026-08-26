@@ -62,7 +62,7 @@ const Procurement = {
         let totalCost = 0;
         let sHtml = '<strong>📋 ЦЕННИКИ ДЛЯ ВИТРИНЫ ФУДТРАКА:</strong><ul style="list-style-type:none;padding-left:0;">';
         
-        const s = { ...RAW_S, "рыба": fishPrice };
+        const prices = { ...RAW_PRICES, "рыба": fishPrice };
         
         // Вспомогательная функция: проверяет, нужно ли сырьё только для заготовок
         const isOnlyForPrep = (dish, ingredient) => {
