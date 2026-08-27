@@ -21,32 +21,34 @@ const Procurement = {
         EventBus.on('procurement:calculate', () => this.calculate());
     },
     
-    calculate() {
-        if (!window.DISH_DATABASE || DISH_DATABASE.length === 0) {
-            alert('⚠️ База блюд не загружена!');
-            return;
-        }
-        
-        const logic = Store.get('businessLogic');
-        const truckLimit = Store.get('truckFridge');
-        const carLimit = Store.get('carTrunk');
-        const rvLimit = Store.get('rvStorage');
-        const margin = Store.get('marginPercent');
-        const fishPrice = Store.get('fishPrice');
-        const selectedDishes = Store.get('selectedDishes');
-        const rawStock = Store.get('rawStock');
-        const prepStock = Store.get('prepStock');
-        
-        const selected = DISH_DATABASE.filter((_, idx) => selectedDishes[idx]);
-        if (selected.length === 0) {
-            alert('Выберите хотя бы одно блюдо!');
-            return;
-        }
-        
-        let totalComponentsPerServing = 0;
-        selected.forEach(dish => {
-            for (let k in dish.recipe) totalComponentsPerServing += dish.recipe[k];
-        });
+    calculate: function() {
+    if (!window.DISH_DATABASE || DISH_DATABASE.length === 0) {
+        alert('️ База блюд не загружена!');
+        return;
+    }
+    
+    var logic = Store.get('businessLogic');
+    var truckLimit = Store.get('truckFridge');
+    var carLimit = Store.get('carTrunk');
+    var rvLimit = Store.get('rvStorage');
+    var margin = Store.get('marginPercent');
+    var fishPrice = Store.get('fishPrice');
+    var selectedDishes = Store.get('selectedDishes');
+    var rawStock = Store.get('rawStock');
+    var prepStock = Store.get('prepStock');
+    
+    var selected = DISH_DATABASE.filter(function(_, idx) { return selectedDishes[idx]; });
+    
+    if (selected.length === 0) {
+        alert('Выберите хотя бы одно блюдо!');
+        return;
+    }
+    
+    // ДОБАВЬ ЭТУ СТРОКУ:
+    var pricesHtml = '<strong>📋 ЦЕННИКИ ДЛЯ ВИТРИНЫ ФУДТРАКА:</strong><ul style="list-style-type:none;padding-left:0;">';
+    
+    // ... остальной код ...
+}
         
         const transportLimit = (logic === '1') ? truckLimit : (logic === '4' ? rvLimit : carLimit);
         const storageLimit = (logic === '3' || logic === '4') ? rvLimit : truckLimit;
