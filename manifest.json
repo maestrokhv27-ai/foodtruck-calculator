@@ -4,3 +4,12 @@
   "changelog": "Первый запуск",
   "updates": []
 }
+{
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
