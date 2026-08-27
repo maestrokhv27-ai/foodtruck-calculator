@@ -46,9 +46,9 @@ const Procurement = {
         }
         
         var totalComponentsPerServing = 0;
-        selected.forEach(function(dish) {
-            for (var k in dish.recipe) totalComponentsPerServing += dish.recipe[comp];
-        });
+selected.forEach(function(dish) {
+    for (var k in dish.recipe) totalComponentsPerServing += dish.recipe[k];  // ✅ ПРАВИЛЬНО
+});
         
         var transportLimit = (logic === '1') ? truckLimit : (logic === '4' ? rvLimit : carLimit);
         var storageLimit = (logic === '3' || logic === '4') ? rvLimit : truckLimit;
