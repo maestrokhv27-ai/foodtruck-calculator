@@ -457,16 +457,241 @@ bindEvents: function() {
     },
     
     openRestockModal: function() {
-        alert('Функция догрузки в разработке');
-    },
+    var prepStock = Store.get('prepStock');
+    var logic = Store.get('businessLogic');
+    var self = this;
     
-    openPrepareModal: function() {
-        alert('Функция приготовления в разработке');
-    },
+    var html = '<div style="max-height: 60vh; overflow-y: auto;">';
+    html += '<p style="color: #7f8c8d; font-size: 14px;">Выберите компоненты для догрузки в фудтрак:</p>';
     
-    openWasteModal: function() {
-        alert('Функция списания в разработке');
-    },
+    var sources = [];
+    if (logic === '2' || logic === '3' || logic === '4') sources.push({ key: 'rvStorage', name: ' Багажник' });
+    if (logic === '3' || logic === '4') sources.push({ key: 'rvCabinet', name: ' Шкаф' });
+    
+    if (sources.length === 0) {
+        html += '<p style="color: #e74c3c;">Нет хранилищ для догрузки (выбрана логика "Только фудтрак").</p>';
+    } else {
+        sources.forEach(function(src) {
+            var items = Object.keys(prepStock[src.key]).filter(function(k) { return prepStock[src.key][k] > 0; });
+            if (items.length === 0) return;
+            
+            html += '<h4 style="margin: 15px 0 8px 0; color: #2c3e50;">' + src.name + ':</h4>';
+            items.forEach(function(comp) {
+                var name = COMPONENT_NAMES[comp] || comp;
+                html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border-radius: 4px; margin-bottom: 5px;">';
+                html += '<span>' + name + ' (' + prepStock[src.key][comp] + ' шт.)</span>';
+                html += '<div style="display: flex; gap: 5px;">';
+                html += '<input type="number" id="restock_' + src.key + '_' + comp + '" value="10" min="1" max="' + prepStock[src.key][comp] + '" style="width: 60px; padding: 4px;">';
+                html += '<button class="restock-btn" data-comp="' + comp + '" data-source="' + src.key + '" style="background: #27ae60; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">+</button>';
+                html += '</div></div>';
+            });
+        });
+    }
+    html += '</div>';
+    
+    this.showModal('🔄 Догрузить в фудтрак', html);
+    
+    setTimeout(function() {
+        document.querySelectorAll('.restock-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var comp = btn.getAttribute('data-comp');
+                var source = btn.getAttribute('data-source');
+                var input = document.getElementById('restock_' + source + '_' + comp);
+                var qty = parseInt(input.value) || 0;
+                
+                if (qty > 0 && prepStock[source][comp] >= qty) {
+                    prepStock[source][comp] -= qty;
+                    prepStock.truck[comp] = (prepStock.truck[comp] || 0) + qty;
+                    Store.set('prepStock', prepStock);
+                    self.showCurrentStock();
+                    self.renderPOS();
+                    self.openRestockModal();
+                    alert('✅ Догружено: ' + (COMPONENT_NAMES[comp] || comp) + ' x' + qty);
+                }
+            });
+        });
+    }, 100);
+},
+
+openPrepareModal: function() {
+    var prepStock = Store.get('prepStock');
+    var self = this;
+    
+    var html = '<div style="max-height: 60vh; overflow-y: auto;">';
+    html += '<p style="color: #7f8c8d; font-size: 14px;">Выберите что приготовить из сырья:</p>';
+    
+    PREP_ITEMS.forEach(function(comp) {
+        var name = COMPONENT_NAMES[comp] || comp;
+        var recipe = PREP_RECIPES[comp];
+        if (!recipe) return;
+        
+        html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border-radius: 4px; margin-bottom: 5px;">';
+        html += '<span>' + name + ' (сейчас: ' + (prepStock.truck[comp] || 0) + ')</span>';
+        html += '<div style="display: flex; gap: 5px;">';
+        html += '<input type="number" id="prepare_' + comp + '" value="10" min="1" style="width: 60px; padding: 4px;">';
+        html += '<button class="prepare-btn" data-comp="' + comp + '" style="background: #8e44ad; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">👨‍🍳</button>';
+        html += '</div></div>';
+    });
+    html += '</div>';
+    
+    this.showModal('👨‍🍳 Приготовить заготовки', html);
+    
+    setTimeout(function() {
+        document.querySelectorAll('.prepare-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var comp = btn.getAttribute('data-comp');
+                var input = document.getElementById('prepare_' + comp);
+                var qty = parseInt(input.value) || 0;
+                
+                if (qty > 0 && self.prepareComponent(comp, qty)) {
+                    alert('✅ Приготовлено: ' + (COMPONENT_NAMES[comp] || comp) + ' x' + qty);
+                    self.openPrepareModal();
+                }
+            });
+        });
+    }, 100);
+},
+
+prepareComponent: function(comp, qty) {
+    var recipe = PREP_RECIPES[comp];
+    if (!recipe) {
+        alert('Этот компонент нельзя приготовить!');
+        return false;
+    }
+    
+    var prepStock = Store.get('prepStock');
+    
+    for (var raw in recipe) {
+        if (raw === 'инструменты') continue;
+        var needed = recipe[raw] * qty;
+        var available = (prepStock.truck[raw] || 0) + (prepStock.rvCabinet[raw] || 0) + (prepStock.rvStorage[raw] || 0);
+        if (available < needed) {
+            alert('❌ Недостаточно ' + (COMPONENT_NAMES[raw] || raw) + '! Нужно: ' + needed + ', есть: ' + available);
+            return false;
+        }
+    }
+    
+    for (var raw in recipe) {
+        if (raw === 'инструменты') continue;
+        var needed = recipe[raw] * qty;
+        var sources = ['truck', 'rvCabinet', 'rvStorage'];
+        for (var i = 0; i < sources.length; i++) {
+            if (needed <= 0) break;
+            var src = sources[i];
+            var available = prepStock[src][raw] || 0;
+            var take = Math.min(available, needed);
+            prepStock[src][raw] -= take;
+            needed -= take;
+        }
+    }
+    
+    prepStock.truck[comp] = (prepStock.truck[comp] || 0) + qty;
+    Store.set('prepStock', prepStock);
+    this.showCurrentStock();
+    this.renderPOS();
+    
+    return true;
+},
+
+openWasteModal: function() {
+    var prepStock = Store.get('prepStock');
+    var waste = Store.get('waste');
+    var self = this;
+    
+    var html = '<div style="max-height: 60vh; overflow-y: auto;">';
+    html += '<p style="color: #7f8c8d; font-size: 14px;">Выберите что списать:</p>';
+    
+    var rawItems = Object.keys(prepStock.truck).filter(function(k) { return BASE_INGREDIENTS.indexOf(k) !== -1; });
+    if (rawItems.length > 0) {
+        html += '<h4 style="margin: 15px 0 8px 0; color: #e74c3c;">🥩 Сырьё:</h4>';
+        rawItems.forEach(function(comp) {
+            var qty = prepStock.truck[comp] || 0;
+            if (qty <= 0) return;
+            var price = RAW_PRICES[comp] || 0;
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #fdf2f2; border-radius: 4px; margin-bottom: 5px;">';
+            html += '<span>' + (COMPONENT_NAMES[comp] || comp) + ' (' + qty + ' шт.) — $' + price + '/шт</span>';
+            html += '<div style="display: flex; gap: 5px;">';
+            html += '<input type="number" id="waste_' + comp + '" value="1" min="1" max="' + qty + '" style="width: 60px; padding: 4px;">';
+            html += '<button class="waste-btn" data-comp="' + comp + '" data-price="' + price + '" style="background: #e74c3c; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">🗑️</button>';
+            html += '</div></div>';
+        });
+    }
+    
+    var prepItems = Object.keys(prepStock.truck).filter(function(k) { return BASE_INGREDIENTS.indexOf(k) === -1; });
+    if (prepItems.length > 0) {
+        html += '<h4 style="margin: 15px 0 8px 0; color: #e67e22;">🍳 Заготовки:</h4>';
+        prepItems.forEach(function(comp) {
+            var qty = prepStock.truck[comp] || 0;
+            if (qty <= 0) return;
+            var price = PREP_PRICES[comp] || 0;
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #fff3cd; border-radius: 4px; margin-bottom: 5px;">';
+            html += '<span>' + (COMPONENT_NAMES[comp] || comp) + ' (' + qty + ' шт.) — $' + price + '/шт</span>';
+            html += '<div style="display: flex; gap: 5px;">';
+            html += '<input type="number" id="waste_' + comp + '" value="1" min="1" max="' + qty + '" style="width: 60px; padding: 4px;">';
+            html += '<button class="waste-btn" data-comp="' + comp + '" data-price="' + price + '" style="background: #e74c3c; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">🗑️</button>';
+            html += '</div></div>';
+        });
+    }
+    
+    if (waste.items && waste.items.length > 0) {
+        html += '<hr style="margin: 15px 0;"><h4 style="margin: 0 0 8px 0; color: #7f8c8d;">📊 Списание за смену:</h4>';
+        html += '<div style="background: #f8f9fa; padding: 10px; border-radius: 4px;">';
+        waste.items.forEach(function(item) {
+            html += '<div style="font-size: 13px; margin-bottom: 3px;">• ' + item.name + ': ' + item.qty + ' шт. (' + item.time + ') — $' + item.cost + '</div>';
+        });
+        html += '<div style="font-weight: bold; margin-top: 8px; color: #e74c3c;">Итого убыток: $' + waste.total + '</div>';
+        html += '</div>';
+    }
+    html += '</div>';
+    
+    this.showModal('🗑️ Списать брак/отходы', html);
+    
+    setTimeout(function() {
+        document.querySelectorAll('.waste-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var comp = btn.getAttribute('data-comp');
+                var price = parseInt(btn.getAttribute('data-price'));
+                var input = document.getElementById('waste_' + comp);
+                var qty = parseInt(input.value) || 0;
+                
+                if (qty > 0 && prepStock.truck[comp] >= qty) {
+                    prepStock.truck[comp] -= qty;
+                    Store.set('prepStock', prepStock);
+                    
+                    var w = Store.get('waste');
+                    if (!w.items) w.items = [];
+                    w.items.push({ name: COMPONENT_NAMES[comp] || comp, qty: qty, cost: qty * price, time: new Date().toLocaleTimeString() });
+                    w.total = (w.total || 0) + qty * price;
+                    Store.set('waste', w);
+                    
+                    self.showCurrentStock();
+                    self.renderPOS();
+                    self.updateShiftDisplay();
+                    self.openWasteModal();
+                    
+                    alert('🗑️ Списано: ' + (COMPONENT_NAMES[comp] || comp) + ' x' + qty + ' (убыток: $' + (qty * price) + ')');
+                }
+            });
+        });
+    }, 100);
+},
+
+showModal: function(title, content) {
+    var modal = document.getElementById('sync_modal');
+    var titleEl = document.getElementById('sync_modal_title');
+    var contentEl = document.getElementById('sync_modal_content');
+    
+    if (modal && titleEl && contentEl) {
+        titleEl.innerText = title;
+        contentEl.innerHTML = content;
+        modal.style.display = 'flex';
+    } else {
+        var tempDiv = document.createElement('div');
+        tempDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+        tempDiv.innerHTML = '<div style="background:white;padding:20px;border-radius:8px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;"><h3>' + title + '</h3>' + content + '<button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;width:100%;padding:10px;background:#e74c3c;color:white;border:none;border-radius:4px;cursor:pointer;">Закрыть</button></div>';
+        document.body.appendChild(tempDiv);
+    }
+}
     
     resetShift: function() {
         if (!confirm('⚠️ Завершить смену и обнулить кассу?')) return;
