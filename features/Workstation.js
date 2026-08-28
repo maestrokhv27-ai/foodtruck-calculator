@@ -208,36 +208,38 @@ const Workstation = {
         if (this.orderItems) this.orderItems.innerHTML = itemsHtml;
         if (this.orderTotal) this.orderTotal.innerText = '$' + total.toLocaleString();
         
-        // 🔥 ДОБАВЛЯЕМ ПЕРЕКЛЮЧАТЕЛЬ СРОЧНОСТИ
-        var oldToggle = this.orderBlock.querySelector('.urgent-toggle-container');
-        if (oldToggle) oldToggle.remove();
+    // 🔥 ДОБАВЛЯЕМ ПЕРЕКЛЮЧАТЕЛЬ СРОЧНОСТИ
+    var oldToggle = this.orderBlock.querySelector('.urgent-toggle-container');
+    if (oldToggle) oldToggle.remove();
+    
+    if (urgentPercent > 0) {
+        var toggleContainer = document.createElement('div');
+        toggleContainer.className = 'urgent-toggle-container';
+        toggleContainer.style.cssText = 'margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #f39c12;';
         
-        if (urgentPercent > 0) {
-            var toggleContainer = document.createElement('div');
-            toggleContainer.className = 'urgent-toggle-container';
-            toggleContainer.style.cssText = 'margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #f39c12;';
-            
-            var label = document.createElement('label');
-            label.style.cssText = 'font-weight: bold; color: #d35400; cursor: pointer; display: flex; align-items: center; gap: 8px;';
-            label.innerHTML = '<span style="font-size: 18px;">⚡</span> Срочный заказ (+${urgentPercent}%)';
-            
-            var checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.checked = isUrgent;
-            checkbox.style.cssText = 'width: 18px; height: 18px; cursor: pointer; accent-color: #e67e22;';
-            checkbox.id = 'urgent-order-checkbox';
-            
-            label.prepend(checkbox);
-            
-            checkbox.addEventListener('change', function(e) {
-                Store.set('isCurrentOrderUrgent', e.target.checked);
-                self.renderOrder(); // Перерисовываем чек
-                self.renderPOS();   // Обновляем цены на карточках
-            });
-            
-            toggleContainer.appendChild(label);
-            this.orderBlock.appendChild(toggleContainer);
-        }
+        var label = document.createElement('label');
+        label.style.cssText = 'font-weight: bold; color: #d35400; cursor: pointer; display: flex; align-items: center; gap: 8px; width: 100%;';
+        // ИСПРАВЛЕНО: используем конкатенацию вместо template literals
+        label.innerHTML = '<span style="font-size: 18px;">⚡</span> Срочный заказ (+' + urgentPercent + '%)';
+        
+        var checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = isUrgent;
+        checkbox.style.cssText = 'width: 18px; height: 18px; cursor: pointer; accent-color: #e67e22;';
+        checkbox.id = 'urgent-order-checkbox';
+        
+        label.prepend(checkbox);
+        
+        var self = this;
+        checkbox.addEventListener('change', function(e) {
+            Store.set('isCurrentOrderUrgent', e.target.checked);
+            self.renderOrder();
+            self.renderPOS();
+        });
+        
+        toggleContainer.appendChild(label);
+        this.orderBlock.appendChild(toggleContainer);
+    }
         
         this.renderKitchenTicket(indices);
         
