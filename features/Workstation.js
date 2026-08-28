@@ -691,7 +691,7 @@ showModal: function(title, content) {
         tempDiv.innerHTML = '<div style="background:white;padding:20px;border-radius:8px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;"><h3>' + title + '</h3>' + content + '<button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;width:100%;padding:10px;background:#e74c3c;color:white;border:none;border-radius:4px;cursor:pointer;">Закрыть</button></div>';
         document.body.appendChild(tempDiv);
     }
-}
+},
     
     resetShift: function() {
         if (!confirm('⚠️ Завершить смену и обнулить кассу?')) return;
