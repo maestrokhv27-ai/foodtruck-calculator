@@ -55,7 +55,7 @@ const Settings = {
         EventBus.on('store:ready', function() { self.loadFromStore(); });
     },
     
-    loadFromStore() {
+        loadFromStore() {
         if (this.elements.businessLogic) this.elements.businessLogic.value = Store.get('businessLogic');
         if (this.elements.truckFridge) this.elements.truckFridge.value = Store.get('truckFridge');
         if (this.elements.carTrunk) this.elements.carTrunk.value = Store.get('carTrunk');
@@ -63,27 +63,17 @@ const Settings = {
         if (this.elements.rvCabinet) this.elements.rvCabinet.value = Store.get('rvCabinet');
         if (this.elements.marginPercent) this.elements.marginPercent.value = Store.get('marginPercent');
         if (this.elements.fishPrice) this.elements.fishPrice.value = Store.get('fishPrice');
-        if (this.elements.urgentMarkup) this.elements.urgentMarkup.value = Store.get('urgentMarkup') || 50; //  НОВОЕ
+        
+        // 🔥 ИСПРАВЛЕНИЕ: принудительно сохраняем значение по умолчанию, если его нет
+        var urgentVal = Store.get('urgentMarkup');
+        if (urgentVal === undefined || urgentVal === null || urgentVal === '') {
+            urgentVal = 50;
+            Store.set('urgentMarkup', urgentVal);
+        }
+        if (this.elements.urgentMarkup) this.elements.urgentMarkup.value = urgentVal;
         
         this.updateVisibility();
         this.renderMenu();
-    },
-    
-    updateVisibility() {
-        var logic = Store.get('businessLogic');
-        
-        var groups = {
-            'group_truck_limit': true,
-            'group_car_limit': logic === '2' || logic === '3',
-            'group_rv_storage': logic === '3' || logic === '4',
-            'group_rv_cabinet': logic === '3' || logic === '4'
-        };
-        
-        Object.keys(groups).forEach(function(id) {
-            var show = groups[id];
-            var el = document.getElementById(id);
-            if (el) el.style.display = show ? 'flex' : 'none';
-        });
     },
     
     renderMenu() {
