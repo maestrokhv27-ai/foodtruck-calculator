@@ -34,7 +34,7 @@ const Settings = {
         }
         
         // Изменение параметров
-        var configInputs = ['truckFridge', 'carTrunk', 'rvStorage', 'rvCabinet', 'marginPercent', 'fishPrice', 'urgentMarkup']; // 🔥 ДОБАВИЛ urgentMarkup
+        var configInputs = ['truckFridge', 'carTrunk', 'rvStorage', 'rvCabinet', 'marginPercent', 'fishPrice', 'urgentMarkup'];
         configInputs.forEach(function(key) {
             var el = self.elements[key];
             if (el) {
@@ -55,7 +55,7 @@ const Settings = {
         EventBus.on('store:ready', function() { self.loadFromStore(); });
     },
     
-        loadFromStore() {
+    loadFromStore() {
         if (this.elements.businessLogic) this.elements.businessLogic.value = Store.get('businessLogic');
         if (this.elements.truckFridge) this.elements.truckFridge.value = Store.get('truckFridge');
         if (this.elements.carTrunk) this.elements.carTrunk.value = Store.get('carTrunk');
@@ -64,7 +64,7 @@ const Settings = {
         if (this.elements.marginPercent) this.elements.marginPercent.value = Store.get('marginPercent');
         if (this.elements.fishPrice) this.elements.fishPrice.value = Store.get('fishPrice');
         
-        // 🔥 ИСПРАВЛЕНИЕ: принудительно сохраняем значение по умолчанию, если его нет
+        //  ИСПРАВЛЕНИЕ: принудительно сохраняем значение по умолчанию, если его нет
         var urgentVal = Store.get('urgentMarkup');
         if (urgentVal === undefined || urgentVal === null || urgentVal === '') {
             urgentVal = 50;
@@ -74,7 +74,6 @@ const Settings = {
         
         this.updateVisibility();
         this.renderMenu();
-        
     },
     
     renderMenu() {
@@ -120,17 +119,17 @@ const Settings = {
                 Store.set('selectedDishes', selected);
             });
         });
-    }
-};
+    },
+
+    // 🔥 ДОБАВЛЕННАЯ ФУНКЦИЯ (теперь она ВНУТРИ объекта Settings)
     updateVisibility: function() {
         var logic = Store.get('businessLogic');
         
-        // Показываем/скрываем поля в зависимости от логики
         var groups = {
-            'group_truck_limit': true, // Всегда видно
-            'group_car_limit': logic === '2' || logic === '3', // Видно для авто и макс. цепочки
-            'group_rv_storage': logic === '3' || logic === '4', // Видно для кемпера/автодома
-            'group_rv_cabinet': logic === '3' || logic === '4'  // Видно для кемпера/автодома
+            'group_truck_limit': true,
+            'group_car_limit': logic === '2' || logic === '3',
+            'group_rv_storage': logic === '3' || logic === '4',
+            'group_rv_cabinet': logic === '3' || logic === '4'
         };
         
         for (var id in groups) {
@@ -140,8 +139,6 @@ const Settings = {
             }
         }
     }
-    
 };
-window.Settings = Settings;
 
 window.Settings = Settings;
