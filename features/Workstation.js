@@ -172,6 +172,10 @@ const Workstation = {
     },
     
     renderOrder: function() {
+        console.log('=== ДИАГНОСТИКА СРОЧНОСТИ ===');
+        console.log('urgentMarkup из Store:', Store.get('urgentMarkup'));
+        console.log('isCurrentOrderUrgent из Store:', Store.get('isCurrentOrderUrgent'));
+        console.log('calculatedPrices:', Store.get('calculatedPrices'));
         var currentOrder = Store.get('currentOrder');
         var indices = Object.keys(currentOrder);
         
