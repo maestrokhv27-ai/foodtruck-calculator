@@ -74,6 +74,7 @@ const Settings = {
         
         this.updateVisibility();
         this.renderMenu();
+        
     },
     
     renderMenu() {
@@ -121,5 +122,26 @@ const Settings = {
         });
     }
 };
+    updateVisibility: function() {
+        var logic = Store.get('businessLogic');
+        
+        // Показываем/скрываем поля в зависимости от логики
+        var groups = {
+            'group_truck_limit': true, // Всегда видно
+            'group_car_limit': logic === '2' || logic === '3', // Видно для авто и макс. цепочки
+            'group_rv_storage': logic === '3' || logic === '4', // Видно для кемпера/автодома
+            'group_rv_cabinet': logic === '3' || logic === '4'  // Видно для кемпера/автодома
+        };
+        
+        for (var id in groups) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.style.display = groups[id] ? 'flex' : 'none';
+            }
+        }
+    }
+    
+};
+window.Settings = Settings;
 
 window.Settings = Settings;
