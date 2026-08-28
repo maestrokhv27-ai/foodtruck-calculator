@@ -16,26 +16,29 @@ const Settings = {
             rvCabinet: document.getElementById('cfg_rv_cabinet'),
             marginPercent: document.getElementById('cfg_margin_percent'),
             fishPrice: document.getElementById('cfg_fish_price'),
+            urgentMarkup: document.getElementById('cfg_urgent_markup'), // 🔥 НОВОЕ
             menuContainer: document.getElementById('menu_checkboxes'),
             calcButton: document.querySelector('.btn-calc')
         };
     },
     
     bindEvents() {
+        var self = this;
+        
         // Изменение логики
         if (this.elements.businessLogic) {
-            this.elements.businessLogic.addEventListener('change', (e) => {
+            this.elements.businessLogic.addEventListener('change', function(e) {
                 Store.set('businessLogic', e.target.value);
-                this.updateVisibility();
+                self.updateVisibility();
             });
         }
         
         // Изменение параметров
-        const configInputs = ['truckFridge', 'carTrunk', 'rvStorage', 'rvCabinet', 'marginPercent', 'fishPrice'];
-        configInputs.forEach(key => {
-            const el = this.elements[key];
+        var configInputs = ['truckFridge', 'carTrunk', 'rvStorage', 'rvCabinet', 'marginPercent', 'fishPrice', 'urgentMarkup']; // 🔥 ДОБАВИЛ urgentMarkup
+        configInputs.forEach(function(key) {
+            var el = self.elements[key];
             if (el) {
-                el.addEventListener('input', (e) => {
+                el.addEventListener('input', function(e) {
                     Store.set(key, parseFloat(e.target.value) || 0);
                 });
             }
@@ -43,13 +46,13 @@ const Settings = {
         
         // Кнопка расчёта
         if (this.elements.calcButton) {
-            this.elements.calcButton.addEventListener('click', () => {
+            this.elements.calcButton.addEventListener('click', function() {
                 EventBus.emit('procurement:calculate');
             });
         }
         
         // Подписка на изменения
-        EventBus.on('store:ready', () => this.loadFromStore());
+        EventBus.on('store:ready', function() { self.loadFromStore(); });
     },
     
     loadFromStore() {
@@ -60,23 +63,25 @@ const Settings = {
         if (this.elements.rvCabinet) this.elements.rvCabinet.value = Store.get('rvCabinet');
         if (this.elements.marginPercent) this.elements.marginPercent.value = Store.get('marginPercent');
         if (this.elements.fishPrice) this.elements.fishPrice.value = Store.get('fishPrice');
+        if (this.elements.urgentMarkup) this.elements.urgentMarkup.value = Store.get('urgentMarkup') || 50; //  НОВОЕ
         
         this.updateVisibility();
         this.renderMenu();
     },
     
     updateVisibility() {
-        const logic = Store.get('businessLogic');
+        var logic = Store.get('businessLogic');
         
-        const groups = {
+        var groups = {
             'group_truck_limit': true,
             'group_car_limit': logic === '2' || logic === '3',
             'group_rv_storage': logic === '3' || logic === '4',
             'group_rv_cabinet': logic === '3' || logic === '4'
         };
         
-        Object.entries(groups).forEach(([id, show]) => {
-            const el = document.getElementById(id);
+        Object.keys(groups).forEach(function(id) {
+            var show = groups[id];
+            var el = document.getElementById(id);
             if (el) el.style.display = show ? 'flex' : 'none';
         });
     },
@@ -86,40 +91,40 @@ const Settings = {
         
         this.elements.menuContainer.innerHTML = '';
         
-        const grouped = {};
-        DISH_DATABASE.forEach((dish, index) => {
+        var grouped = {};
+        DISH_DATABASE.forEach(function(dish, index) {
             if (!grouped[dish.cat]) grouped[dish.cat] = [];
-            grouped[dish.cat].push({ dish, index });
+            grouped[dish.cat].push({ dish: dish, index: index });
         });
         
-        const selectedDishes = Store.get('selectedDishes');
+        var selectedDishes = Store.get('selectedDishes');
         
-        for (let cat in grouped) {
-            const header = document.createElement('div');
+        for (var cat in grouped) {
+            var header = document.createElement('div');
             header.className = 'menu-category';
             header.textContent = CATEGORY_NAMES[cat] || cat;
             this.elements.menuContainer.appendChild(header);
             
-            grouped[cat].forEach(({ dish, index }) => {
-                const label = document.createElement('label');
+            grouped[cat].forEach(function(item) {
+                var dish = item.dish;
+                var index = item.index;
+                
+                var label = document.createElement('label');
                 label.className = 'menu-item';
-                label.innerHTML = `
-                    <input type="checkbox" 
-                           id="dish_${index}" 
-                           data-index="${index}"
-                           ${selectedDishes[index] ? 'checked' : ''}>
-                    <span>${dish.name}</span>
-                    <small>$${dish.price}</small>
-                `;
+                label.innerHTML = '<input type="checkbox" id="dish_' + index + '" data-index="' + index + '"' + 
+                                  (selectedDishes[index] ? ' checked' : '') + '>' +
+                                  '<span>' + dish.name + '</span>' +
+                                  '<small>$' + dish.price + '</small>';
                 this.elements.menuContainer.appendChild(label);
-            });
+            }.bind(this));
         }
         
         // Подписка на изменения чекбоксов
-        this.elements.menuContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', (e) => {
-                const index = parseInt(e.target.dataset.index);
-                const selected = Store.get('selectedDishes');
+        var self = this;
+        this.elements.menuContainer.querySelectorAll('input[type="checkbox"]').forEach(function(checkbox) {
+            checkbox.addEventListener('change', function(e) {
+                var index = parseInt(e.target.dataset.index);
+                var selected = Store.get('selectedDishes');
                 selected[index] = e.target.checked;
                 Store.set('selectedDishes', selected);
             });
