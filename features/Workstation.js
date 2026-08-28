@@ -33,55 +33,63 @@ const Workstation = {
                         document.getElementById('btn_waste');
     },
     
-    bindEvents: function() {
-        var self = this;
-        
-        if (this.completeBtn) {
-            this.completeBtn.addEventListener('click', function() { self.completeOrder(); });
-        }
-        if (this.resetBtn) {
-            this.resetBtn.addEventListener('click', function() { self.resetShift(); });
-        }
-        if (this.loadStockBtn) {
-            this.loadStockBtn.addEventListener('click', function() { self.loadStockFromInventory(); });
-        }
-        if (this.restockBtn) {
-            this.restockBtn.addEventListener('click', function() { self.openRestockModal(); });
-        }
-        if (this.prepareBtn) {
-            this.prepareBtn.addEventListener('click', function() { self.openPrepareModal(); });
-        }
-        if (this.wasteBtn) {
-            this.wasteBtn.addEventListener('click', function() { self.openWasteModal(); });
-        }
-        
-        // Делегирование на document
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('pos-btn-plus')) {
-                e.preventDefault();
-                e.stopPropagation();
-                var idx = parseInt(e.target.getAttribute('data-index'));
-                if (!isNaN(idx)) {
-                    self.addToOrder(idx, 1);
-                }
-                return;
+bindEvents: function() {
+    var self = this;
+    
+    if (this.completeBtn) {
+        this.completeBtn.addEventListener('click', function() { self.completeOrder(); });
+    }
+    if (this.resetBtn) {
+        this.resetBtn.addEventListener('click', function() { self.resetShift(); });
+    }
+    if (this.loadStockBtn) {
+        this.loadStockBtn.addEventListener('click', function() { self.loadStockFromInventory(); });
+    }
+    if (this.restockBtn) {
+        this.restockBtn.addEventListener('click', function() { self.openRestockModal(); });
+    }
+    if (this.prepareBtn) {
+        this.prepareBtn.addEventListener('click', function() { self.openPrepareModal(); });
+    }
+    if (this.wasteBtn) {
+        this.wasteBtn.addEventListener('click', function() { self.openWasteModal(); });
+    }
+    
+    // Делегирование на document для кнопок + и -
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('pos-btn-plus')) {
+            e.preventDefault();
+            e.stopPropagation();
+            var idx = parseInt(e.target.getAttribute('data-index'));
+            if (!isNaN(idx)) {
+                self.addToOrder(idx, 1);
             }
-            if (e.target.classList.contains('pos-btn-minus')) {
-                e.preventDefault();
-                e.stopPropagation();
-                var idx = parseInt(e.target.getAttribute('data-index'));
-                if (!isNaN(idx)) {
-                    self.addToOrder(idx, -1);
-                }
-                return;
+            return;
+        }
+        if (e.target.classList.contains('pos-btn-minus')) {
+            e.preventDefault();
+            e.stopPropagation();
+            var idx = parseInt(e.target.getAttribute('data-index'));
+            if (!isNaN(idx)) {
+                self.addToOrder(idx, -1);
             }
-        });
-        
-        EventBus.on('store:ready', function() { self.loadFromStore(); });
-        EventBus.on('state:currentOrder:changed', function() { self.renderOrder(); });
-        EventBus.on('state:shift:changed', function() { self.updateShiftDisplay(); });
-        EventBus.on('state:waste:changed', function() { self.updateShiftDisplay(); });
-    },
+            return;
+        }
+    });
+    
+    // Слушатели событий
+    EventBus.on('store:ready', function() { self.loadFromStore(); });
+    
+    // 🔥 ВОТ ЭТА СТРОКА БЫЛА ПРОПУЩЕНА! Она обновляет кассу после расчёта закупки:
+    EventBus.on('procurement:calculated', function() { 
+        self.renderPOS(); 
+        self.renderOrder(); 
+    });
+    
+    EventBus.on('state:currentOrder:changed', function() { self.renderOrder(); });
+    EventBus.on('state:shift:changed', function() { self.updateShiftDisplay(); });
+    EventBus.on('state:waste:changed', function() { self.updateShiftDisplay(); });
+},
     
     loadFromStore: function() {
         this.renderPOS();
