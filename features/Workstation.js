@@ -516,19 +516,19 @@ const Workstation = {
         var rawStock = Store.get('rawStock');
         var prepStock = Store.get('prepStock');
         
-        prepStock.truck = {};
-        prepStock.rvStorage = {};
-        prepStock.rvCabinet = {};
-        
+        // ✅ НЕ обнуляем хранилища, а добавляем к существующим остаткам
         BASE_INGREDIENTS.forEach(function(id) {
             var val = rawStock[id] || 0;
+            if (val <= 0) return; // Пропускаем, если на складе 0
+            
             if (logic === '1') {
-                prepStock.truck[id] = val;
+                prepStock.truck[id] = (prepStock.truck[id] || 0) + val;
             } else if (logic === '2') {
-                prepStock.rvStorage[id] = val;
+                prepStock.rvStorage[id] = (prepStock.rvStorage[id] || 0) + val;
             } else {
-                prepStock.rvStorage[id] = Math.floor(val / 2);
-                prepStock.rvCabinet[id] = val - Math.floor(val / 2);
+                var half = Math.floor(val / 2);
+                prepStock.rvStorage[id] = (prepStock.rvStorage[id] || 0) + half;
+                prepStock.rvCabinet[id] = (prepStock.rvCabinet[id] || 0) + (val - half);
             }
         });
         
